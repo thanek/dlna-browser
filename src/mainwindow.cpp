@@ -253,6 +253,7 @@ void MainWindow::navigateHome()
         serverItems.append(item);
     }
     m_model->setItems(serverItems);
+    loadThumbnails(serverItems);
 
     QList<DlnaLocation> breadcrumb;
     DlnaLocation home;
@@ -363,6 +364,7 @@ void MainWindow::onServerFound(const DlnaServer &server)
             current.append(m_model->itemAt(i));
         current.append(item);
         m_model->setItems(current);
+        loadThumbnails(current);
 
         m_statusLabel->setText(tr("Found: %1").arg(server.name));
     }
