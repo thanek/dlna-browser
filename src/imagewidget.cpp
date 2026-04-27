@@ -1,0 +1,222 @@
+#include "imagewidget.h"
+
+#include <QPainter>
+#include <QPainterPath>
+#include <QKeyEvent>
+#include <QWheelEvent>
+#include <QMouseEvent>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QImageReader>
+#include <QBuffer>
+
+ImageWidget::ImageWidget(QWidget *parent)
+    : QWidget(parent)
+    , m_nam(new QNetworkAccessManager(this))
+{
+    setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);
+    QPalette pal = palette();
+    pal.setColor(QPalette::Window, Qt::black);
+    setPalette(pal);
+    setAutoFillBackground(true);
+}
+
+void ImageWidget::loadItem(const DlnaItem &item)
+{
+    m_title = item.title;
+    m_pixmap = {};
+    m_zoom = 1.0;
+    m_offset = {};
+    m_loading = true;
+    update();
+
+    if (item.resourceUrl.isEmpty()) {
+        m_loading = false;
+        update();
+        return;
+    }
+
+    QNetworkRequest req(item.resourceUrl);
+    req.setTransferTimeout(15000);
+    QNetworkReply *reply = m_nam->get(req);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        m_loading = false;
+        if (reply->error() != QNetworkReply::NoError) { update(); return; }
+
+        QByteArray data = reply->readAll();
+        QBuffer buf(&data);
+        QImageReader reader(&buf);
+        reader.setAutoTransform(true);
+        QImage img = reader.read();
+        if (!img.isNull())
+            setPixmap(QPixmap::fromImage(img));
+        else
+            update();
+    });
+
+    setFocus();
+}
+
+void ImageWidget::setPixmap(const QPixmap &px)
+{
+    m_pixmap = px;
+    // Calculate minimum zoom to fit screen
+    if (!m_pixmap.isNull() && width() > 0 && height() > 0) {
+        double sx = double(width()) / m_pixmap.width();
+        double sy = double(height()) / m_pixmap.height();
+        m_minZoom = qMin(sx, sy);
+        m_zoom = m_minZoom;
+    }
+    m_offset = {};
+    update();
+}
+
+QRectF ImageWidget::imageRect() const
+{
+    if (m_pixmap.isNull()) return {};
+    double w = m_pixmap.width() * m_zoom;
+    double h = m_pixmap.height() * m_zoom;
+    return QRectF(width() / 2.0 - w / 2.0 + m_offset.x(),
+                  height() / 2.0 - h / 2.0 + m_offset.y(), w, h);
+}
+
+void ImageWidget::clampOffset()
+{
+    if (m_pixmap.isNull()) return;
+    double imgW = m_pixmap.width() * m_zoom;
+    double imgH = m_pixmap.height() * m_zoom;
+    double maxX = qMax(0.0, (imgW - width()) / 2.0);
+    double maxY = qMax(0.0, (imgH - height()) / 2.0);
+    m_offset.setX(qBound(-maxX, m_offset.x(), maxX));
+    m_offset.setY(qBound(-maxY, m_offset.y(), maxY));
+}
+
+void ImageWidget::zoom(double factor, QPointF center)
+{
+    if (m_pixmap.isNull()) return;
+    if (center.x() < 0) center = QPointF(width() / 2.0, height() / 2.0);
+
+    double newZoom = qMax(m_minZoom, m_zoom * factor);
+    double scale = newZoom / m_zoom;
+    m_offset = center + (m_offset - center) * scale;
+    m_zoom = newZoom;
+    clampOffset();
+    update();
+}
+
+void ImageWidget::resizeEvent(QResizeEvent *e)
+{
+    QWidget::resizeEvent(e);
+    if (!m_pixmap.isNull()) {
+        double sx = double(width()) / m_pixmap.width();
+        double sy = double(height()) / m_pixmap.height();
+        m_minZoom = qMin(sx, sy);
+        if (m_zoom < m_minZoom) m_zoom = m_minZoom;
+        clampOffset();
+    }
+}
+
+void ImageWidget::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::SmoothPixmapTransform);
+
+    if (m_loading) {
+        p.setPen(QColor(0x64, 0x64, 0x64));
+        QFont f = font();
+        f.setPointSize(20);
+        p.setFont(f);
+        p.drawText(rect(), Qt::AlignCenter, "…");
+        drawTitleBar(p);
+        return;
+    }
+
+    if (!m_pixmap.isNull()) {
+        QRectF r = imageRect();
+        p.drawPixmap(r, m_pixmap, m_pixmap.rect());
+    }
+
+    drawTitleBar(p);
+}
+
+void ImageWidget::drawTitleBar(QPainter &p)
+{
+    if (m_title.isEmpty()) return;
+    p.setRenderHint(QPainter::Antialiasing);
+
+    QFont f = font();
+    f.setPointSize(14);
+    p.setFont(f);
+
+    QFontMetrics fm(f);
+    int textW = fm.horizontalAdvance(m_title);
+    int padH = 24, padV = 10;
+    int boxW = textW + padH * 2;
+    int boxH = fm.height() + padV * 2;
+    QRect boxR((width() - boxW) / 2, 20, boxW, boxH);
+
+    QPainterPath path;
+    path.addRoundedRect(boxR, 8, 8);
+    p.fillPath(path, QColor(0, 0, 0, 170));
+    p.setPen(Qt::white);
+    p.drawText(boxR, Qt::AlignCenter, m_title);
+}
+
+void ImageWidget::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key()) {
+    case Qt::Key_Escape:
+        if (m_zoom > m_minZoom + 0.001 || !m_offset.isNull()) {
+            m_zoom = m_minZoom;
+            m_offset = {};
+            update();
+        } else {
+            emit closeRequested();
+        }
+        break;
+    case Qt::Key_Plus:
+    case Qt::Key_Equal:
+        zoom(ZoomStep);
+        break;
+    case Qt::Key_Minus:
+        zoom(1.0 / ZoomStep);
+        break;
+    default:
+        QWidget::keyPressEvent(e);
+    }
+}
+
+void ImageWidget::wheelEvent(QWheelEvent *e)
+{
+    double factor = e->angleDelta().y() > 0 ? ZoomStep : 1.0 / ZoomStep;
+    zoom(factor, e->position());
+}
+
+void ImageWidget::mousePressEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::LeftButton) {
+        m_dragging = true;
+        m_dragStart = e->position();
+        m_offsetAtDrag = m_offset;
+        setCursor(Qt::ClosedHandCursor);
+    }
+}
+
+void ImageWidget::mouseMoveEvent(QMouseEvent *e)
+{
+    if (m_dragging) {
+        m_offset = m_offsetAtDrag + (e->position() - m_dragStart);
+        clampOffset();
+        update();
+    }
+}
+
+void ImageWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::LeftButton) {
+        m_dragging = false;
+        setCursor(Qt::ArrowCursor);
+    }
+}

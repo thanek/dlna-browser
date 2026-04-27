@@ -1,0 +1,93 @@
+#pragma once
+#include <QWidget>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+#include <QVideoSink>
+#include <QVideoFrame>
+#include <QTimer>
+#include <QPixmap>
+#include <QNetworkAccessManager>
+#include "dlnaitem.h"
+
+// Transparent overlay widget drawn on top of QVideoWidget.
+// Handles controls painting and mouse interaction.
+class ControlOverlay : public QWidget {
+    Q_OBJECT
+public:
+    explicit ControlOverlay(QWidget *parent = nullptr);
+
+    void setTitle(const QString &title);
+    void setPosition(qint64 pos, qint64 duration);
+    void setPlaying(bool playing);
+    void setMuted(bool muted);
+    void setAudioMode(bool audio, const QPixmap &art = {});
+    void showControls();
+
+signals:
+    void playPauseClicked();
+    void muteClicked();
+    void seekRequested(double fraction);
+
+protected:
+    void paintEvent(QPaintEvent *) override;
+    void mousePressEvent(QMouseEvent *) override;
+    void mouseMoveEvent(QMouseEvent *) override;
+
+private:
+    void paintAudioCircle(QPainter &p);
+    void paintTitleBar(QPainter &p);
+    void paintControlBar(QPainter &p);
+    void paintPlayIcon(QPainter &p, QRectF r, bool playing);
+    void paintMuteIcon(QPainter &p, QRectF r, bool muted);
+
+    QRectF controlBarRect() const;
+    QRectF titleBarRect() const;
+    QRectF progressBarRect() const;
+    QRectF playButtonRect() const;
+    QRectF muteButtonRect() const;
+    static QString formatTime(qint64 ms);
+
+    QString m_title;
+    qint64 m_position = 0;
+    qint64 m_duration = 0;
+    bool m_playing = false;
+    bool m_muted = false;
+    bool m_controlsVisible = true;
+    bool m_audioMode = false;
+    QPixmap m_albumArt;
+    QTimer *m_hideTimer;
+
+    static constexpr QColor AccentColor{0x88, 0xc0, 0xd0};
+};
+
+class VideoWidget : public QWidget {
+    Q_OBJECT
+public:
+    explicit VideoWidget(QWidget *parent = nullptr);
+    void loadItem(const DlnaItem &item);
+    void stop();
+
+signals:
+    void closeRequested();
+    void navigateNext();
+    void navigatePrev();
+
+protected:
+    void resizeEvent(QResizeEvent *) override;
+    void keyPressEvent(QKeyEvent *) override;
+    void mouseMoveEvent(QMouseEvent *) override;
+
+private:
+    void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
+    void fetchAlbumArt(const QUrl &url);
+    void paintEvent(QPaintEvent *) override;
+    static QRectF letterboxRect(QSize content, QSize view);
+
+    QMediaPlayer *m_player;
+    QAudioOutput *m_audioOutput;
+    QVideoSink *m_videoSink;
+    QVideoFrame m_currentFrame;
+    ControlOverlay *m_overlay;
+    QNetworkAccessManager *m_nam;
+    bool m_audioMode = false;
+};
