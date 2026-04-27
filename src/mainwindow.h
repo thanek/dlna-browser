@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <QList>
 #include <QNetworkAccessManager>
+#include <QSlider>
 #include "dlnaitem.h"
 #include "dlnadiscovery.h"
 #include "dlnaclient.h"
@@ -50,6 +51,8 @@ private:
     void updateNavigationButtons();
     void loadThumbnails(const QList<DlnaItem> &items);
     QString sortCriteriaString() const;
+    void applySortMode(SortMode mode);
+    SortMode effectiveSortMode() const;
 
     // UI
     QToolBar *m_toolBar = nullptr;
@@ -66,7 +69,8 @@ private:
     AddressBar *m_addressBar = nullptr;
     ContentView *m_contentView = nullptr;
     FavoritesPanel *m_favoritesPanel = nullptr;
-    QLabel *m_statusLabel = nullptr;
+    QLabel  *m_statusLabel = nullptr;
+    QSlider *m_sizeSlider  = nullptr;
     MediaViewer *m_mediaViewer = nullptr;
 
     // DLNA

@@ -25,6 +25,8 @@ namespace Fa {
     constexpr uint SortAlphaDesc= 0xf15e;
     constexpr uint SortAmount   = 0xf160;
     constexpr uint Calendar     = 0xf073;
+    constexpr uint Minimize     = 0xf068;  // minus — small end of size slider
+    constexpr uint Maximize     = 0xf067;  // plus  — large end of size slider
 }
 
 class FaIcon {

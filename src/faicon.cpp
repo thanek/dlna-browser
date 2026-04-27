@@ -57,7 +57,10 @@ QPixmap FaIcon::pixmap(uint codePoint, QColor color, int size)
     return px;
 }
 
-QIcon FaIcon::icon(uint codePoint, QColor color, int size)
+QIcon FaIcon::icon(uint codePoint, QColor color, int /*size*/)
 {
-    return QIcon(pixmap(codePoint, color, size));
+    QIcon ic;
+    for (int s : {16, 20, 24, 32, 48, 64, 96, 128, 256})
+        ic.addPixmap(pixmap(codePoint, color, s));
+    return ic;
 }

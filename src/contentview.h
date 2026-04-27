@@ -17,6 +17,8 @@ public:
     void setModel(DlnaModel *model);
     void setViewMode(ViewMode mode);
     void setSortMode(SortMode mode);
+    void setCurrentRow(int row);
+    void setIconScale(int scale);   // 0-100
     ViewMode viewMode() const { return m_viewMode; }
 
 signals:

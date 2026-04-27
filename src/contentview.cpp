@@ -70,3 +70,24 @@ void ContentView::setSortMode(SortMode mode)
 {
     m_sortMode = mode;
 }
+
+void ContentView::setIconScale(int scale)
+{
+    int li = 16 + scale * 40 / 100;           // list icon:  16..56 px
+    int ii = 48 + scale * 160 / 100;          // icon icon: 48..208 px
+    int ig = ii + 32;                         // icon grid: always 32 px more than icon
+
+    m_listView->setIconSize({li, li});
+    m_iconView->setIconSize({ii, ii});
+    m_iconView->setGridSize({ig, ig});
+}
+
+void ContentView::setCurrentRow(int row)
+{
+    if (!m_model || row < 0 || row >= m_model->rowCount()) return;
+    QModelIndex idx = m_model->index(row, 0);
+    m_listView->setCurrentIndex(idx);
+    m_listView->scrollTo(idx);
+    m_iconView->setCurrentIndex(idx);
+    m_iconView->scrollTo(idx);
+}

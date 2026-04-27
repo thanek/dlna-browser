@@ -18,6 +18,9 @@ public:
     // Open the item at `row` in `model`. Shows the window if hidden.
     void openItem(DlnaModel *model, int row);
 
+signals:
+    void rowChanged(int row);
+
 protected:
     void closeEvent(QCloseEvent *) override;
 

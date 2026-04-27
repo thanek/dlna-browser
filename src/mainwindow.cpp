@@ -5,6 +5,8 @@
 #include "mediaviewer.h"
 #include "faicon.h"
 
+#include <QSettings>
+
 #include <QToolBar>
 #include <QToolButton>
 #include <QAction>
@@ -49,6 +51,21 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::onItemActivated);
     connect(m_favoritesPanel, &FavoritesPanel::favoriteActivated,
             this, &MainWindow::onFavoriteActivated);
+    connect(m_mediaViewer, &MediaViewer::rowChanged,
+            m_contentView, &ContentView::setCurrentRow);
+
+    // Restore persisted settings
+    QSettings settings;
+
+    int scale = settings.value("iconScale", 25).toInt();
+    m_sizeSlider->setValue(scale);
+    m_contentView->setIconScale(scale);
+
+    if (settings.value("viewMode").toString() == "icons") {
+        m_viewMode = ViewMode::Icons;
+        m_btnView->setIcon(FaIcon::icon(Fa::Grip));
+        m_contentView->setViewMode(ViewMode::Icons);
+    }
 
     // Show home (server list) on startup
     navigateHome();
@@ -144,7 +161,77 @@ void MainWindow::setupToolBar()
 void MainWindow::setupStatusBar()
 {
     m_statusLabel = new QLabel(this);
-    statusBar()->addWidget(m_statusLabel);
+    statusBar()->addWidget(m_statusLabel, 1);
+
+    auto *iconSmall = new QLabel(this);
+    iconSmall->setPixmap(FaIcon::pixmap(Fa::Minimize, QColor(160, 160, 160), 12));
+    iconSmall->setContentsMargins(4, 0, 2, 0);
+
+    m_sizeSlider = new QSlider(Qt::Horizontal, this);
+    m_sizeSlider->setRange(0, 100);
+    m_sizeSlider->setValue(25);
+    m_sizeSlider->setFixedWidth(110);
+    m_sizeSlider->setToolTip(tr("Icon size"));
+
+    auto *iconLarge = new QLabel(this);
+    iconLarge->setPixmap(FaIcon::pixmap(Fa::Maximize, QColor(160, 160, 160), 14));
+    iconLarge->setContentsMargins(2, 0, 4, 0);
+
+    statusBar()->addPermanentWidget(iconSmall);
+    statusBar()->addPermanentWidget(m_sizeSlider);
+    statusBar()->addPermanentWidget(iconLarge);
+
+    connect(m_sizeSlider, &QSlider::valueChanged, this, [this](int v) {
+        m_contentView->setIconScale(v);
+        QSettings().setValue("iconScale", v);
+    });
+}
+
+// ── Sort persistence helpers ─────────────────────────────────────────────────
+
+static QString sortKey(const DlnaLocation &loc)
+{
+    return "sort/" + loc.serverName + "/" + loc.containerId;
+}
+
+static QString sortModeToString(SortMode m)
+{
+    switch (m) {
+    case SortMode::NameAsc:  return "nameAsc";
+    case SortMode::NameDesc: return "nameDesc";
+    case SortMode::DateAsc:  return "dateAsc";
+    case SortMode::DateDesc: return "dateDesc";
+    }
+    return "nameAsc";
+}
+
+static SortMode sortModeFromString(const QString &s)
+{
+    if (s == "nameDesc") return SortMode::NameDesc;
+    if (s == "dateAsc")  return SortMode::DateAsc;
+    if (s == "dateDesc") return SortMode::DateDesc;
+    return SortMode::NameAsc;
+}
+
+void MainWindow::applySortMode(SortMode mode)
+{
+    m_sortMode = mode;
+    m_actSortNameAsc ->setChecked(mode == SortMode::NameAsc);
+    m_actSortNameDesc->setChecked(mode == SortMode::NameDesc);
+    m_actSortDateAsc ->setChecked(mode == SortMode::DateAsc);
+    m_actSortDateDesc->setChecked(mode == SortMode::DateDesc);
+    m_contentView->setSortMode(mode);
+}
+
+SortMode MainWindow::effectiveSortMode() const
+{
+    QSettings settings;
+    for (int i = m_history.size() - 1; i >= 0; --i) {
+        const QString key = sortKey(m_history[i]);
+        if (settings.contains(key))
+            return sortModeFromString(settings.value(key).toString());
+    }
+    return SortMode::NameAsc;
 }
 
 // ── Navigation ───────────────────────────────────────────────────────────────
@@ -195,6 +282,8 @@ void MainWindow::browseCurrentLocation()
 {
     if (m_atHome) { navigateHome(); return; }
     if (m_history.isEmpty()) return;
+
+    applySortMode(effectiveSortMode());
 
     const DlnaLocation &loc = m_history.last();
     m_statusLabel->setText(tr("Loading %1…").arg(loc.title));
@@ -292,10 +381,9 @@ void MainWindow::onDiscoveryFinished()
 void MainWindow::onControlUrlReady(const QString &serverName, const QString &controlUrl)
 {
     Q_UNUSED(serverName)
-    // The pending location on top of history already has the container ID;
-    // now we have the control URL — patch it and browse.
     if (m_history.isEmpty()) return;
     m_history.last().controlUrl = controlUrl;
+    applySortMode(effectiveSortMode());
     m_client->browse(controlUrl, m_history.last().containerId, sortCriteriaString());
 }
 
@@ -370,12 +458,16 @@ void MainWindow::onFavoriteActivated(const DlnaLocation &location)
 
 void MainWindow::onSortChanged(QAction *action)
 {
-    if (action == m_actSortNameAsc)       m_sortMode = SortMode::NameAsc;
-    else if (action == m_actSortNameDesc) m_sortMode = SortMode::NameDesc;
-    else if (action == m_actSortDateAsc)  m_sortMode = SortMode::DateAsc;
-    else                                   m_sortMode = SortMode::DateDesc;
+    SortMode mode;
+    if (action == m_actSortNameAsc)       mode = SortMode::NameAsc;
+    else if (action == m_actSortNameDesc) mode = SortMode::NameDesc;
+    else if (action == m_actSortDateAsc)  mode = SortMode::DateAsc;
+    else                                   mode = SortMode::DateDesc;
 
-    m_contentView->setSortMode(m_sortMode);
+    if (!m_atHome && !m_history.isEmpty())
+        QSettings().setValue(sortKey(m_history.last()), sortModeToString(mode));
+
+    applySortMode(mode);
     if (!m_atHome) browseCurrentLocation();
 }
 
@@ -389,6 +481,7 @@ void MainWindow::onViewToggled()
         m_btnView->setIcon(FaIcon::icon(Fa::List));
     }
     m_contentView->setViewMode(m_viewMode);
+    QSettings().setValue("viewMode", m_viewMode == ViewMode::Icons ? "icons" : "list");
 }
 
 void MainWindow::addCurrentToFavorites()

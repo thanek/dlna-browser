@@ -11,6 +11,7 @@
 #include <QStatusBar>
 #include <QCloseEvent>
 #include <QKeyEvent>
+#include <QShortcut>
 
 MediaViewer::MediaViewer(QWidget *parent)
     : QMainWindow(parent)
@@ -56,6 +57,9 @@ MediaViewer::MediaViewer(QWidget *parent)
 
     connect(m_btnPrev, &QToolButton::clicked, this, &MediaViewer::navigatePrev);
     connect(m_btnNext, &QToolButton::clicked, this, &MediaViewer::navigateNext);
+
+    new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Left),  this, [this]{ navigatePrev(); });
+    new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Right), this, [this]{ navigateNext(); });
 }
 
 void MediaViewer::openItem(DlnaModel *model, int row)
@@ -71,6 +75,7 @@ void MediaViewer::openRow(int row)
 {
     m_video->stop();
     m_row = row;
+    emit rowChanged(row);
 
     DlnaItem item = m_model->itemAt(row);
     setWindowTitle(item.title.isEmpty() ? tr("Media Viewer") : item.title);
