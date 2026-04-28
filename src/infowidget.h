@@ -1,19 +1,15 @@
 #pragma once
-#include <QWidget>
 #include "dlnaitem.h"
+#include "mediawidget.h"
 
-class InfoWidget : public QWidget {
+class InfoWidget : public MediaWidget {
     Q_OBJECT
 public:
     explicit InfoWidget(QWidget *parent = nullptr);
     void showItem(const DlnaItem &item);
 
-signals:
-    void closeRequested();
-
 protected:
     void paintEvent(QPaintEvent *) override;
-    void keyPressEvent(QKeyEvent *) override;
 
 private:
     DlnaItem m_item;

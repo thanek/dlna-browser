@@ -253,6 +253,7 @@ void MainWindow::navigateHome()
         serverItems.append(item);
     }
     m_model->setItems(serverItems);
+    restoreFocus();
     loadThumbnails(serverItems);
 
     QList<DlnaLocation> breadcrumb;
@@ -304,12 +305,17 @@ void MainWindow::browseCurrentLocation()
 void MainWindow::navigateBack()
 {
     if (m_history.size() <= 1) {
-        if (!m_history.isEmpty())
+        if (!m_history.isEmpty()) {
+            const DlnaLocation &leaving = m_history.last();
+            m_pendingFocusId = (leaving.containerId == "0") ? leaving.serverName : leaving.containerId;
             m_forwardStack.prepend(m_history.takeLast());
+        }
         m_atHome = true;
         navigateHome();
         return;
     }
+    const DlnaLocation &leaving = m_history.last();
+    m_pendingFocusId = (leaving.containerId == "0") ? leaving.serverName : leaving.containerId;
     m_forwardStack.prepend(m_history.takeLast());
     browseCurrentLocation();
 }
@@ -325,6 +331,8 @@ void MainWindow::navigateForward()
 void MainWindow::navigateUp()
 {
     if (m_atHome) return;
+    const DlnaLocation &leaving = m_history.last();
+    m_pendingFocusId = (leaving.containerId == "0") ? leaving.serverName : leaving.containerId;
     if (m_history.size() <= 1) {
         navigateHome();
         return;
@@ -392,6 +400,7 @@ void MainWindow::onControlUrlReady(const QString &serverName, const QString &con
 void MainWindow::onBrowseReady(const QList<DlnaItem> &items)
 {
     m_model->setItems(items);
+    restoreFocus();
 
     int containers = 0, files = 0;
     for (const auto &i : items)
@@ -505,6 +514,19 @@ QString MainWindow::sortCriteriaString() const
     case SortMode::DateDesc: return "-dc:date";
     }
     return {};
+}
+
+void MainWindow::restoreFocus()
+{
+    if (m_pendingFocusId.isEmpty()) return;
+    for (int row = 0; row < m_model->rowCount(); ++row) {
+        const DlnaItem &item = m_model->itemAt(row);
+        if (item.id == m_pendingFocusId || item.title == m_pendingFocusId) {
+            m_contentView->setCurrentRow(row);
+            break;
+        }
+    }
+    m_pendingFocusId.clear();
 }
 
 void MainWindow::loadThumbnails(const QList<DlnaItem> &items)

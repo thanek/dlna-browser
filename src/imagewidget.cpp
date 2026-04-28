@@ -1,7 +1,6 @@
 #include "imagewidget.h"
 
 #include <QPainter>
-#include <QPainterPath>
 #include <QKeyEvent>
 #include <QWheelEvent>
 #include <QMouseEvent>
@@ -11,10 +10,9 @@
 #include <QBuffer>
 
 ImageWidget::ImageWidget(QWidget *parent)
-    : QWidget(parent)
+    : MediaWidget(parent)
     , m_nam(new QNetworkAccessManager(this))
 {
-    setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
     QPalette pal = palette();
     pal.setColor(QPalette::Window, Qt::black);
@@ -24,7 +22,7 @@ ImageWidget::ImageWidget(QWidget *parent)
 
 void ImageWidget::loadItem(const DlnaItem &item)
 {
-    m_title = item.title;
+    setTitle(item.title);
     m_pixmap = {};
     m_zoom = 1.0;
     m_offset = {};
@@ -62,7 +60,6 @@ void ImageWidget::loadItem(const DlnaItem &item)
 void ImageWidget::setPixmap(const QPixmap &px)
 {
     m_pixmap = px;
-    // Calculate minimum zoom to fit screen
     if (!m_pixmap.isNull() && width() > 0 && height() > 0) {
         double sx = double(width()) / m_pixmap.width();
         double sy = double(height()) / m_pixmap.height();
@@ -139,29 +136,6 @@ void ImageWidget::paintEvent(QPaintEvent *)
     }
 
     drawTitleBar(p);
-}
-
-void ImageWidget::drawTitleBar(QPainter &p)
-{
-    if (m_title.isEmpty()) return;
-    p.setRenderHint(QPainter::Antialiasing);
-
-    QFont f = font();
-    f.setPointSize(14);
-    p.setFont(f);
-
-    QFontMetrics fm(f);
-    int textW = fm.horizontalAdvance(m_title);
-    int padH = 24, padV = 10;
-    int boxW = textW + padH * 2;
-    int boxH = fm.height() + padV * 2;
-    QRect boxR((width() - boxW) / 2, 20, boxW, boxH);
-
-    QPainterPath path;
-    path.addRoundedRect(boxR, 8, 8);
-    p.fillPath(path, QColor(0, 0, 0, 170));
-    p.setPen(Qt::white);
-    p.drawText(boxR, Qt::AlignCenter, m_title);
 }
 
 void ImageWidget::keyPressEvent(QKeyEvent *e)

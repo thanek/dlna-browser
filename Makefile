@@ -1,5 +1,5 @@
 BUILD_DIR := build
-CMAKE_FLAGS := -DCMAKE_OSX_ARCHITECTURES=arm64
+CMAKE_FLAGS := 
 
 .PHONY: all configure build test clean
 

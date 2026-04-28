@@ -1,6 +1,9 @@
 #include "dlnamodel.h"
 #include "faicon.h"
 #include <QIcon>
+#include <QPainter>
+#include <QApplication>
+#include <QPalette>
 
 DlnaModel::DlnaModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -63,7 +66,7 @@ QVariant DlnaModel::data(const QModelIndex &index, int role) const
             return QIcon(m_thumbnails.value(index.row()));
         switch (item.type) {
         case DlnaItemType::Server:    return FaIcon::icon(Fa::Server,  QColor(0x5c, 0x9b, 0xd6));
-        case DlnaItemType::Container: return FaIcon::icon(Fa::Folder,  QColor(0xf5, 0xa6, 0x23));
+        case DlnaItemType::Container: return FaIcon::icon(Fa::Folder,  qApp->palette().color(QPalette::Highlight));
         case DlnaItemType::Video:     return FaIcon::icon(Fa::Video,   QColor(0xe5, 0x39, 0x35));
         case DlnaItemType::Audio:     return FaIcon::icon(Fa::Music,   QColor(0x8e, 0x24, 0xaa));
         case DlnaItemType::Image:     return FaIcon::icon(Fa::Image,   QColor(0x43, 0xa0, 0x47));
@@ -91,7 +94,19 @@ QHash<int, QByteArray> DlnaModel::roleNames() const
 void DlnaModel::setThumbnail(int row, const QPixmap &pixmap)
 {
     if (row < 0 || row >= m_items.size()) return;
-    m_thumbnails.insert(row, pixmap);
+
+    const int maxSize = 256;
+    QPixmap px = (pixmap.width() > maxSize || pixmap.height() > maxSize)
+        ? pixmap.scaled(maxSize, maxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+        : pixmap;
+
+    int side = qMax(px.width(), px.height());
+    QPixmap padded(side, side);
+    padded.fill(Qt::transparent);
+    QPainter p(&padded);
+    p.drawPixmap((side - px.width()) / 2, side - px.height(), px);
+
+    m_thumbnails.insert(row, padded);
     QModelIndex idx = index(row);
     emit dataChanged(idx, idx, {Qt::DecorationRole, ThumbnailRole});
 }

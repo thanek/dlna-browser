@@ -34,6 +34,8 @@ set(SOURCES
     src/addressbar.h
     src/mediaviewer.cpp
     src/mediaviewer.h
+    src/mediawidget.cpp
+    src/mediawidget.h
     src/videowidget.cpp
     src/videowidget.h
     src/imagewidget.cpp

@@ -50,6 +50,7 @@ private:
     void browseCurrentLocation();
     void updateNavigationButtons();
     void loadThumbnails(const QList<DlnaItem> &items);
+    void restoreFocus();
     QString sortCriteriaString() const;
     void applySortMode(SortMode mode);
     SortMode effectiveSortMode() const;
@@ -89,4 +90,5 @@ private:
     ViewMode m_viewMode = ViewMode::List;
 
     int m_thumbnailGeneration = 0;
+    QString m_pendingFocusId;
 };

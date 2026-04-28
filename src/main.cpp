@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("DlnaBrowser");
     app.setOrganizationName("dlna-browser");
     app.setApplicationDisplayName("DLNA Browser");
-    app.setWindowIcon(FaIcon::icon(Fa::Server, QColor(0x5c, 0x9b, 0xd6), 64));
+    app.setWindowIcon(QIcon(":/icon.svg"));
 
     MainWindow w;
     w.show();

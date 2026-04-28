@@ -71,14 +71,14 @@ QRectF ControlOverlay::titleBarRect() const
 {
     QFontMetrics fm(font());
     int textW = fm.horizontalAdvance(m_title);
-    int bw = qMin(textW + 56, width() - 40);
+    int bw = qMin(textW + 100, width() - 40);
     int bh = fm.height() + 24;
     return QRectF((width() - bw) / 2.0, 20, bw, bh);
 }
 
 QRectF ControlOverlay::controlBarRect() const
 {
-    int bw = qMin(600, width() - 40);
+    int bw = qMin(600, width() - 80);
     int bh = 72;
     return QRectF((width() - bw) / 2.0, height() - bh - 20, bw, bh);
 }
@@ -162,7 +162,7 @@ void ControlOverlay::paintTitleBar(QPainter &p)
     if (m_title.isEmpty()) return;
     QRectF r = titleBarRect();
     QPainterPath path;
-    path.addRoundedRect(r, 8, 8);
+    path.addRoundedRect(r, 20,  20);
     p.fillPath(path, QColor(0, 0, 0, 170));
     p.setPen(Qt::white);
     QFont f = font();
@@ -204,7 +204,7 @@ void ControlOverlay::paintControlBar(QPainter &p)
 {
     QRectF cb = controlBarRect();
     QPainterPath path;
-    path.addRoundedRect(cb, 10, 10);
+    path.addRoundedRect(cb, 20, 20);
     p.fillPath(path, QColor(0, 0, 0, 200));
 
     // Progress bar track
@@ -292,14 +292,13 @@ void ControlOverlay::mouseMoveEvent(QMouseEvent *)
 // ─── VideoWidget ─────────────────────────────────────────────────────────────
 
 VideoWidget::VideoWidget(QWidget *parent)
-    : QWidget(parent)
+    : MediaWidget(parent)
     , m_player(new QMediaPlayer(this))
     , m_audioOutput(new QAudioOutput(this))
     , m_videoSink(new QVideoSink(this))
     , m_overlay(new ControlOverlay(this))
     , m_nam(new QNetworkAccessManager(this))
 {
-    setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 
     // QVideoSink receives frames — we draw them ourselves in paintEvent,

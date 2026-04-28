@@ -3,7 +3,6 @@
 
 #include <QPainter>
 #include <QPainterPath>
-#include <QKeyEvent>
 #include <QIcon>
 #include <QFontMetrics>
 
@@ -17,9 +16,8 @@ static QIcon iconForItem(const DlnaItem &item)
     }
 }
 
-InfoWidget::InfoWidget(QWidget *parent) : QWidget(parent)
+InfoWidget::InfoWidget(QWidget *parent) : MediaWidget(parent)
 {
-    setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_StyledBackground, false);
 }
 
@@ -30,32 +28,21 @@ void InfoWidget::showItem(const DlnaItem &item)
     setFocus();
 }
 
-void InfoWidget::keyPressEvent(QKeyEvent *e)
-{
-    if (e->key() == Qt::Key_Escape)
-        emit closeRequested();
-    else
-        QWidget::keyPressEvent(e);
-}
-
 void InfoWidget::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
     p.setRenderHint(QPainter::TextAntialiasing);
 
-    // Background
     p.fillRect(rect(), QColor(0, 0, 0));
 
     const int cardW = qMin(480, width() - 64);
     const int cx = width() / 2;
     const int iconSz = 72;
 
-    // Icon
     QRect iconRect(cx - iconSz / 2, height() / 2 - 160, iconSz, iconSz);
     iconForItem(m_item).paint(&p, iconRect);
 
-    // Title
     QFont titleFont = font();
     titleFont.setPointSize(18);
     titleFont.setBold(true);
@@ -65,7 +52,6 @@ void InfoWidget::paintEvent(QPaintEvent *)
     p.drawText(titleRect, Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap,
                m_item.title.isEmpty() ? tr("Unknown") : m_item.title);
 
-    // Info card
     const int cardY = titleRect.top() + 80;
     const int rowH = 32;
     int cardH = rowH * 2 + 32;
@@ -110,7 +96,6 @@ void InfoWidget::paintEvent(QPaintEvent *)
         drawRow(rowY, tr("Date"), m_item.date);
     }
 
-    // Hint
     QFont hintFont = font();
     hintFont.setPointSize(11);
     hintFont.setItalic(true);

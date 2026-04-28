@@ -1,17 +1,14 @@
 #pragma once
-#include <QWidget>
 #include <QPixmap>
 #include <QNetworkAccessManager>
 #include "dlnaitem.h"
+#include "mediawidget.h"
 
-class ImageWidget : public QWidget {
+class ImageWidget : public MediaWidget {
     Q_OBJECT
 public:
     explicit ImageWidget(QWidget *parent = nullptr);
     void loadItem(const DlnaItem &item);
-
-signals:
-    void closeRequested();
 
 protected:
     void paintEvent(QPaintEvent *) override;
@@ -27,11 +24,9 @@ private:
     void clampOffset();
     void zoom(double factor, QPointF center = {-1, -1});
     QRectF imageRect() const;
-    void drawTitleBar(QPainter &p);
 
     QNetworkAccessManager *m_nam;
     QPixmap m_pixmap;
-    QString m_title;
     double m_zoom = 1.0;
     double m_minZoom = 1.0;
     QPointF m_offset;

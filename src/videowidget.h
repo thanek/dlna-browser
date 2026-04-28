@@ -1,5 +1,4 @@
 #pragma once
-#include <QWidget>
 #include <QMediaPlayer>
 #include <QAudioOutput>
 #include <QVideoSink>
@@ -8,9 +7,8 @@
 #include <QPixmap>
 #include <QNetworkAccessManager>
 #include "dlnaitem.h"
+#include "mediawidget.h"
 
-// Transparent overlay widget drawn on top of QVideoWidget.
-// Handles controls painting and mouse interaction.
 class ControlOverlay : public QWidget {
     Q_OBJECT
 public:
@@ -60,7 +58,7 @@ private:
     static constexpr QColor AccentColor{0x88, 0xc0, 0xd0};
 };
 
-class VideoWidget : public QWidget {
+class VideoWidget : public MediaWidget {
     Q_OBJECT
 public:
     explicit VideoWidget(QWidget *parent = nullptr);
@@ -68,7 +66,6 @@ public:
     void stop();
 
 signals:
-    void closeRequested();
     void navigateNext();
     void navigatePrev();
 

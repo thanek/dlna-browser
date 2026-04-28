@@ -2,6 +2,8 @@
 
 #include <QVBoxLayout>
 #include <QSortFilterProxyModel>
+#include <QApplication>
+#include <QPalette>
 
 ContentView::ContentView(QWidget *parent)
     : QWidget(parent)
@@ -19,6 +21,16 @@ ContentView::ContentView(QWidget *parent)
     m_stack->addWidget(m_listView);
     m_stack->addWidget(m_iconView);
     m_stack->setCurrentWidget(m_listView);
+
+    QColor selBg = qApp->palette().color(QPalette::Highlight).darker(170);
+    const QString itemStyle = QString(
+        "QListView { outline: 0; }"
+        "QListView::item { padding: 8px; border-radius: 16px; }"
+        "QListView::item:selected { background: %1; color: palette(highlighted-text); }"
+        "QListView::item:hover:!selected { background: palette(midlight); }")
+        .arg(selBg.name());
+    m_listView->setStyleSheet(itemStyle);
+    m_iconView->setStyleSheet(itemStyle);
 }
 
 void ContentView::setupListView()
@@ -38,7 +50,7 @@ void ContentView::setupIconView()
 {
     m_iconView->setViewMode(QListView::IconMode);
     m_iconView->setIconSize(QSize(64, 64));
-    m_iconView->setGridSize(QSize(96, 96));
+    m_iconView->setGridSize(QSize(96, 128));
     m_iconView->setResizeMode(QListView::Adjust);
     m_iconView->setUniformItemSizes(true);
     m_iconView->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -75,11 +87,12 @@ void ContentView::setIconScale(int scale)
 {
     int li = 16 + scale * 40 / 100;           // list icon:  16..56 px
     int ii = 48 + scale * 160 / 100;          // icon icon: 48..208 px
-    int ig = ii + 32;                         // icon grid: always 32 px more than icon
+    int gw = ii + 32;                         // grid width: 32 px padding
+    int gh = ii + 64;                         // grid height: 64 px fixed label area
 
     m_listView->setIconSize({li, li});
     m_iconView->setIconSize({ii, ii});
-    m_iconView->setGridSize({ig, ig});
+    m_iconView->setGridSize({gw, gh});
 }
 
 void ContentView::setCurrentRow(int row)
