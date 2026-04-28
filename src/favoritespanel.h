@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QWidget>
 #include <QListWidget>
 #include "dlnaitem.h"
 
@@ -9,12 +8,12 @@ class FavoritesPanel : public QWidget {
 public:
     explicit FavoritesPanel(QWidget *parent = nullptr);
 
-    void addFavorite(const QString &name, const DlnaLocation &location);
+    void addFavorite(const QString &name, const QList<DlnaLocation> &path);
     void loadFavorites();
     void saveFavorites();
 
 signals:
-    void favoriteActivated(const DlnaLocation &location);
+    void favoriteActivated(const QList<DlnaLocation> &path);
 
 private slots:
     void onItemDoubleClicked(QListWidgetItem *item);
@@ -25,7 +24,7 @@ private:
 
     struct Favorite {
         QString name;
-        DlnaLocation location;
+        QList<DlnaLocation> path;
     };
     QList<Favorite> m_favorites;
 };

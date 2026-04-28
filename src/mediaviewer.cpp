@@ -51,9 +51,13 @@ MediaViewer::MediaViewer(QWidget *parent)
     connect(m_image, &ImageWidget::closeRequested, this, closeSlot);
     connect(m_info,  &InfoWidget::closeRequested,  this, closeSlot);
 
-    // Keyboard navigation from video player (PageUp/PageDown)
-    connect(m_video, &VideoWidget::navigatePrev, this, &MediaViewer::navigatePrev);
-    connect(m_video, &VideoWidget::navigateNext, this, &MediaViewer::navigateNext);
+    // Keyboard navigation (PageUp/PageDown) — wired from all media widgets
+    for (MediaWidget *w : {static_cast<MediaWidget*>(m_video),
+                           static_cast<MediaWidget*>(m_image),
+                           static_cast<MediaWidget*>(m_info)}) {
+        connect(w, &MediaWidget::navigatePrev, this, &MediaViewer::navigatePrev);
+        connect(w, &MediaWidget::navigateNext, this, &MediaViewer::navigateNext);
+    }
 
     connect(m_btnPrev, &QToolButton::clicked, this, &MediaViewer::navigatePrev);
     connect(m_btnNext, &QToolButton::clicked, this, &MediaViewer::navigateNext);

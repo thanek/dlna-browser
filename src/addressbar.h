@@ -1,9 +1,6 @@
 #pragma once
 
-#include <QWidget>
 #include <QLineEdit>
-#include <QHBoxLayout>
-#include <QList>
 #include "dlnaitem.h"
 
 class AddressBar : public QWidget {

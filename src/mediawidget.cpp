@@ -16,10 +16,19 @@ void MediaWidget::setTitle(const QString &title)
 
 void MediaWidget::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Escape)
+    switch (e->key()) {
+    case Qt::Key_Escape:
         emit closeRequested();
-    else
+        break;
+    case Qt::Key_PageUp:
+        emit navigatePrev();
+        break;
+    case Qt::Key_PageDown:
+        emit navigateNext();
+        break;
+    default:
         QWidget::keyPressEvent(e);
+    }
 }
 
 void MediaWidget::drawTitleBar(QPainter &p) const

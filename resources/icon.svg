@@ -363,7 +363,11 @@
        fy="451.92878"
        r="163.44757"
        gradientUnits="userSpaceOnUse" />
+    <clipPath id="iconClip">
+      <rect x="8" y="8" width="496" height="496" rx="110" />
+    </clipPath>
   </defs>
+  <g clip-path="url(#iconClip)">
   <rect
      x="8"
      y="8"
@@ -487,5 +491,6 @@
            transform="matrix(1.579757,0,0,1.579757,-134.48997,-154.7003)" />
       </g>
     </g>
+  </g>
   </g>
 </svg>

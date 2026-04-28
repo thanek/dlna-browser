@@ -1,9 +1,7 @@
 #include "imagewidget.h"
 
 #include <QPainter>
-#include <QKeyEvent>
 #include <QWheelEvent>
-#include <QMouseEvent>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QImageReader>
@@ -158,7 +156,7 @@ void ImageWidget::keyPressEvent(QKeyEvent *e)
         zoom(1.0 / ZoomStep);
         break;
     default:
-        QWidget::keyPressEvent(e);
+        MediaWidget::keyPressEvent(e);
     }
 }
 

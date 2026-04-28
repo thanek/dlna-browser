@@ -32,7 +32,7 @@ private slots:
     void onBrowseReady(const QList<DlnaItem> &items);
     void onBrowseError(const QString &message);
     void onItemActivated(int row);
-    void onFavoriteActivated(const DlnaLocation &location);
+    void onFavoriteActivated(const QList<DlnaLocation> &path);
 
     void navigateBack();
     void navigateForward();

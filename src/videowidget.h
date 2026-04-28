@@ -65,10 +65,6 @@ public:
     void loadItem(const DlnaItem &item);
     void stop();
 
-signals:
-    void navigateNext();
-    void navigatePrev();
-
 protected:
     void resizeEvent(QResizeEvent *) override;
     void keyPressEvent(QKeyEvent *) override;

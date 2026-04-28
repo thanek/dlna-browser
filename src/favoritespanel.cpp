@@ -5,7 +5,6 @@
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QMenu>
-#include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QStandardPaths>
@@ -18,14 +17,15 @@ FavoritesPanel::FavoritesPanel(QWidget *parent)
 {
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
+    layout->setSpacing(4);
 
     auto *header = new QLabel(tr("Favorites"), this);
-    header->setStyleSheet("padding: 6px 8px; font-weight: bold; color: palette(mid);");
+    header->setStyleSheet("padding: 6px 8px; font-weight: bold; color: palette(text);");
     layout->addWidget(header);
     layout->addWidget(m_list);
 
     m_list->setFrameShape(QFrame::NoFrame);
+    m_list->setStyleSheet("QListWidget::item { padding: 6px 4px; }");
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(m_list, &QListWidget::itemDoubleClicked,
@@ -36,18 +36,31 @@ FavoritesPanel::FavoritesPanel(QWidget *parent)
     loadFavorites();
 }
 
-void FavoritesPanel::addFavorite(const QString &name, const DlnaLocation &location)
+void FavoritesPanel::addFavorite(const QString &name, const QList<DlnaLocation> &path)
 {
+    if (path.isEmpty()) return;
+    const DlnaLocation &last = path.last();
     for (const auto &fav : m_favorites) {
-        if (fav.location.controlUrl == location.controlUrl &&
-            fav.location.containerId == location.containerId)
+        if (!fav.path.isEmpty() &&
+            fav.path.last().controlUrl  == last.controlUrl &&
+            fav.path.last().containerId == last.containerId)
             return;
     }
 
-    m_favorites.append({name, location});
+    m_favorites.append({name, path});
     auto *item = new QListWidgetItem(FaIcon::icon(Fa::Star, QColor(0xff, 0xc1, 0x07)), name);
     m_list->addItem(item);
     saveFavorites();
+}
+
+static DlnaLocation locationFromJson(const QJsonObject &obj)
+{
+    DlnaLocation loc;
+    loc.serverName  = obj["serverName"].toString();
+    loc.controlUrl  = obj["controlUrl"].toString();
+    loc.containerId = obj["containerId"].toString();
+    loc.title       = obj["title"].toString();
+    return loc;
 }
 
 void FavoritesPanel::loadFavorites()
@@ -62,10 +75,14 @@ void FavoritesPanel::loadFavorites()
         QJsonObject obj = val.toObject();
         Favorite fav;
         fav.name = obj["name"].toString();
-        fav.location.serverName  = obj["serverName"].toString();
-        fav.location.controlUrl  = obj["controlUrl"].toString();
-        fav.location.containerId = obj["containerId"].toString();
-        fav.location.title       = obj["title"].toString();
+        if (obj.contains("path")) {
+            for (const auto &locVal : obj["path"].toArray())
+                fav.path.append(locationFromJson(locVal.toObject()));
+        } else {
+            // migrate old single-location format
+            fav.path.append(locationFromJson(obj));
+        }
+        if (fav.path.isEmpty()) continue;
         m_favorites.append(fav);
         m_list->addItem(new QListWidgetItem(FaIcon::icon(Fa::Star, QColor(0xff, 0xc1, 0x07)), fav.name));
     }
@@ -79,12 +96,18 @@ void FavoritesPanel::saveFavorites()
 
     QJsonArray arr;
     for (const auto &fav : m_favorites) {
+        QJsonArray pathArr;
+        for (const auto &loc : fav.path) {
+            QJsonObject locObj;
+            locObj["serverName"]  = loc.serverName;
+            locObj["controlUrl"]  = loc.controlUrl;
+            locObj["containerId"] = loc.containerId;
+            locObj["title"]       = loc.title;
+            pathArr.append(locObj);
+        }
         QJsonObject obj;
-        obj["name"]        = fav.name;
-        obj["serverName"]  = fav.location.serverName;
-        obj["controlUrl"]  = fav.location.controlUrl;
-        obj["containerId"] = fav.location.containerId;
-        obj["title"]       = fav.location.title;
+        obj["name"] = fav.name;
+        obj["path"] = pathArr;
         arr.append(obj);
     }
     QFile f(path);
@@ -96,7 +119,7 @@ void FavoritesPanel::onItemDoubleClicked(QListWidgetItem *item)
 {
     int row = m_list->row(item);
     if (row >= 0 && row < m_favorites.size())
-        emit favoriteActivated(m_favorites.at(row).location);
+        emit favoriteActivated(m_favorites.at(row).path);
 }
 
 void FavoritesPanel::onContextMenu(const QPoint &pos)

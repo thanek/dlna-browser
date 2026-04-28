@@ -457,10 +457,10 @@ void MainWindow::onItemActivated(int row)
     m_mediaViewer->openItem(m_model, row);
 }
 
-void MainWindow::onFavoriteActivated(const DlnaLocation &location)
+void MainWindow::onFavoriteActivated(const QList<DlnaLocation> &path)
 {
     m_forwardStack.clear();
-    m_history.append(location);
+    m_history = QList<DlnaLocation>(path.constBegin(), path.constEnd());
     m_atHome = false;
     browseCurrentLocation();
 }
@@ -500,7 +500,7 @@ void MainWindow::addCurrentToFavorites()
     if (m_atHome || m_history.isEmpty()) return;
     const DlnaLocation &loc = m_history.last();
     QString name = loc.title.isEmpty() ? loc.serverName : loc.title;
-    m_favoritesPanel->addFavorite(name, loc);
+    m_favoritesPanel->addFavorite(name, m_history);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

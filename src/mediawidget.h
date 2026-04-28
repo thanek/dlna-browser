@@ -10,6 +10,8 @@ public:
 
 signals:
     void closeRequested();
+    void navigateNext();
+    void navigatePrev();
 
 protected:
     void keyPressEvent(QKeyEvent *e) override;

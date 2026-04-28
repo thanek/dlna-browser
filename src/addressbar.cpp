@@ -1,5 +1,7 @@
 #include "addressbar.h"
 
+#include <QHBoxLayout>
+
 AddressBar::AddressBar(QWidget *parent)
     : QWidget(parent)
     , m_edit(new QLineEdit(this))

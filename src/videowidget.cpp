@@ -173,16 +173,16 @@ void ControlOverlay::paintTitleBar(QPainter &p)
 
 void ControlOverlay::paintAudioCircle(QPainter &p)
 {
-    int d = int(qMin(width(), height()) * 0.30);
-    QRect circleR((width() - d) / 2, (height() - d) / 2, d, d);
+    int d = int(qMin(width(), height())*0.75);
+    QRect rect = QRect((width() - d) / 2, (height() - d) / 2, d, d);
     QPainterPath path;
-    path.addEllipse(circleR);
+    path.addRoundedRect(rect, 24, 24);
     p.fillPath(path, QColor(0x46, 0x46, 0x46));
 
     if (!m_albumArt.isNull()) {
         p.save();
         p.setClipPath(path);
-        p.drawPixmap(circleR, m_albumArt.scaled(circleR.size(),
+        p.drawPixmap(rect, m_albumArt.scaled(rect.size(),
                      Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
         p.restore();
     } else {
@@ -190,8 +190,8 @@ void ControlOverlay::paintAudioCircle(QPainter &p)
         p.setPen(Qt::NoPen);
         p.setBrush(QColor(0x19, 0x19, 0x19));
         int ns = d / 5;
-        QRect note(circleR.center().x() - ns / 2,
-                   circleR.center().y() - ns * 2, ns, ns * 3);
+        QRect note(rect.center().x() - ns / 2,
+                   rect.center().y() - ns * 2, ns, ns * 3);
         p.drawEllipse(note.left() - ns / 2, note.bottom() - ns / 2, ns, ns / 2);
         p.drawRect(QRect(note.left(), note.top(), ns / 4, note.height()));
         p.drawRect(QRect(note.right() - ns / 4, note.top() - ns / 2, ns / 4, ns * 2));
@@ -432,14 +432,8 @@ void VideoWidget::keyPressEvent(QKeyEvent *e)
         m_overlay->setMuted(m_audioOutput->isMuted());
         m_overlay->showControls();
         break;
-    case Qt::Key_PageUp:
-        emit navigatePrev();
-        break;
-    case Qt::Key_PageDown:
-        emit navigateNext();
-        break;
     default:
-        QWidget::keyPressEvent(e);
+        MediaWidget::keyPressEvent(e);
     }
 }
 
