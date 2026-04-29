@@ -29,6 +29,23 @@ private slots:
     void parseDeviceDescriptor_valid();
     void parseDeviceDescriptor_noFriendlyName();
 
+    void parseDidl_multipleResources_firstWins();
+    void parseControlUrl_relativeNoLeadingSlash();
+
+    void bestIconUrl_prefersPngOverJpeg();
+    void bestIconUrl_largePngPenalty();
+    void bestIconUrl_relativeUrl();
+    void bestIconUrl_absoluteUrl();
+    void bestIconUrl_emptyList();
+
+    void typeFromMime_video();
+    void typeFromMime_audio();
+    void typeFromMime_image();
+    void typeFromMime_unknown();
+    void typeFromMime_empty();
+    void isContainer_serverAndContainer();
+    void isContainer_mediaTypes();
+
     void formatTime_zero();
     void formatTime_seconds();
     void formatTime_minutes();

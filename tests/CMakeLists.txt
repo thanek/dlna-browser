@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Xml Network Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Xml Network Test)
 
 add_executable(test_dlnaparser
     test_dlnaparser.h
@@ -14,3 +14,18 @@ target_link_libraries(test_dlnaparser PRIVATE
     Qt6::Test
 )
 add_test(NAME test_dlnaparser COMMAND test_dlnaparser)
+
+add_executable(test_dlnamodel
+    test_dlnamodel.h
+    test_dlnamodel.cpp
+    ../src/browser/dlnamodel.cpp
+    ../src/ui/faicon.cpp
+)
+target_include_directories(test_dlnamodel PRIVATE ../src/)
+target_link_libraries(test_dlnamodel PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::Test
+)
+add_test(NAME test_dlnamodel COMMAND test_dlnamodel)

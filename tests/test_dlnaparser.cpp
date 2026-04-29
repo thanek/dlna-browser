@@ -226,6 +226,29 @@ void TestDlnaParser::parseBrowseResponse_noResultElement()
     QVERIFY(DlnaParser::parseBrowseResponse(fault).isEmpty());
 }
 
+// ─── parseDidl — edge cases ───────────────────────────────────────────────────
+
+void TestDlnaParser::parseDidl_multipleResources_firstWins()
+{
+    // First non-thumbnail <res> wins; subsequent ones are ignored.
+    const char *didl =
+        "<?xml version=\"1.0\"?>"
+        "<DIDL-Lite xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\""
+        "           xmlns:dc=\"http://purl.org/dc/elements/1.1/\">"
+        "  <item id=\"1\" parentID=\"0\" restricted=\"1\">"
+        "    <dc:title>Clip</dc:title>"
+        "    <res protocolInfo=\"http-get:*:video/mp4:*\">http://server/hd.mp4</res>"
+        "    <res protocolInfo=\"http-get:*:video/mpeg:*\">http://server/sd.mpg</res>"
+        "    <res protocolInfo=\"http-get:*:image/jpeg:DLNA.ORG_PN=JPEG_TN\">http://server/tn.jpg</res>"
+        "  </item>"
+        "</DIDL-Lite>";
+    auto items = DlnaParser::parseDidl(QString::fromUtf8(didl));
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items[0].resourceUrl, QUrl("http://server/hd.mp4"));
+    QCOMPARE(items[0].mimeType, "video/mp4");
+    QCOMPARE(items[0].thumbnailUrl, QUrl("http://server/tn.jpg"));
+}
+
 // ─── parseControlUrl ─────────────────────────────────────────────────────────
 
 void TestDlnaParser::parseControlUrl_found()
@@ -263,6 +286,19 @@ void TestDlnaParser::parseControlUrl_noContentDirectory()
 void TestDlnaParser::parseControlUrl_emptyData()
 {
     QVERIFY(DlnaParser::parseControlUrl({}, "http://192.168.1.1:8080").isEmpty());
+}
+
+void TestDlnaParser::parseControlUrl_relativeNoLeadingSlash()
+{
+    const char *xml =
+        "<?xml version=\"1.0\"?><root>"
+        "  <serviceList><service>"
+        "    <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>"
+        "    <controlURL>cd/control</controlURL>"
+        "  </service></serviceList>"
+        "</root>";
+    QCOMPARE(DlnaParser::parseControlUrl(QByteArray(xml), "http://192.168.1.1:8080"),
+             "http://192.168.1.1:8080/cd/control");
 }
 
 // ─── parseDeviceDescriptor ────────────────────────────────────────────────────
@@ -367,6 +403,113 @@ void TestDlnaParser::findPrevFile_noFiles()
     items << c << c;
     QCOMPARE(DlnaUtils::findPrevFile(items, 1), -1);
     QCOMPARE(DlnaUtils::findNextFile(items, 0), -1);
+}
+
+// ─── bestIconUrl ─────────────────────────────────────────────────────────────
+
+static QDomElement parseIconList(const QByteArray &xml)
+{
+    QDomDocument doc;
+    doc.setContent(xml);
+    return doc.documentElement();
+}
+
+void TestDlnaParser::bestIconUrl_prefersPngOverJpeg()
+{
+    // PNG 128 (score 138) beats JPEG 128 (score 128)
+    auto el = parseIconList(
+        "<iconList>"
+        "  <icon><mimetype>image/jpeg</mimetype><width>128</width><url>/icon.jpg</url></icon>"
+        "  <icon><mimetype>image/png</mimetype><width>128</width><url>/icon.png</url></icon>"
+        "</iconList>");
+    QCOMPARE(DlnaParser::bestIconUrl(el, "http://host").toString(),
+             "http://host/icon.png");
+}
+
+void TestDlnaParser::bestIconUrl_largePngPenalty()
+{
+    // PNG 512 (score 10) loses to JPEG 200 (score 200)
+    auto el = parseIconList(
+        "<iconList>"
+        "  <icon><mimetype>image/png</mimetype><width>512</width><url>/large.png</url></icon>"
+        "  <icon><mimetype>image/jpeg</mimetype><width>200</width><url>/medium.jpg</url></icon>"
+        "</iconList>");
+    QCOMPARE(DlnaParser::bestIconUrl(el, "http://host").toString(),
+             "http://host/medium.jpg");
+}
+
+void TestDlnaParser::bestIconUrl_relativeUrl()
+{
+    auto el = parseIconList(
+        "<iconList>"
+        "  <icon><mimetype>image/png</mimetype><width>64</width><url>/icons/icon.png</url></icon>"
+        "</iconList>");
+    QCOMPARE(DlnaParser::bestIconUrl(el, "http://192.168.1.1:8080").toString(),
+             "http://192.168.1.1:8080/icons/icon.png");
+}
+
+void TestDlnaParser::bestIconUrl_absoluteUrl()
+{
+    auto el = parseIconList(
+        "<iconList>"
+        "  <icon><mimetype>image/png</mimetype><width>64</width><url>http://other.host/icon.png</url></icon>"
+        "</iconList>");
+    QCOMPARE(DlnaParser::bestIconUrl(el, "http://192.168.1.1:8080").toString(),
+             "http://other.host/icon.png");
+}
+
+void TestDlnaParser::bestIconUrl_emptyList()
+{
+    auto el = parseIconList("<iconList></iconList>");
+    QVERIFY(DlnaParser::bestIconUrl(el, "http://host").isEmpty());
+}
+
+// ─── DlnaItem helpers ─────────────────────────────────────────────────────────
+
+void TestDlnaParser::typeFromMime_video()
+{
+    QCOMPARE(DlnaItem::typeFromMime("video/mp4"),       DlnaItemType::Video);
+    QCOMPARE(DlnaItem::typeFromMime("video/x-matroska"),DlnaItemType::Video);
+}
+
+void TestDlnaParser::typeFromMime_audio()
+{
+    QCOMPARE(DlnaItem::typeFromMime("audio/mpeg"), DlnaItemType::Audio);
+    QCOMPARE(DlnaItem::typeFromMime("audio/flac"), DlnaItemType::Audio);
+}
+
+void TestDlnaParser::typeFromMime_image()
+{
+    QCOMPARE(DlnaItem::typeFromMime("image/jpeg"), DlnaItemType::Image);
+    QCOMPARE(DlnaItem::typeFromMime("image/png"),  DlnaItemType::Image);
+}
+
+void TestDlnaParser::typeFromMime_unknown()
+{
+    QCOMPARE(DlnaItem::typeFromMime("application/pdf"), DlnaItemType::Unknown);
+    QCOMPARE(DlnaItem::typeFromMime("text/plain"),      DlnaItemType::Unknown);
+}
+
+void TestDlnaParser::typeFromMime_empty()
+{
+    QCOMPARE(DlnaItem::typeFromMime(""), DlnaItemType::Unknown);
+}
+
+void TestDlnaParser::isContainer_serverAndContainer()
+{
+    DlnaItem srv; srv.type = DlnaItemType::Server;
+    QVERIFY(srv.isContainer());
+    DlnaItem folder; folder.type = DlnaItemType::Container;
+    QVERIFY(folder.isContainer());
+}
+
+void TestDlnaParser::isContainer_mediaTypes()
+{
+    for (auto t : {DlnaItemType::Video, DlnaItemType::Audio,
+                   DlnaItemType::Image, DlnaItemType::Unknown}) {
+        DlnaItem it; it.type = t;
+        QVERIFY(!it.isContainer());
+    }
 }
 
 QTEST_APPLESS_MAIN(TestDlnaParser)

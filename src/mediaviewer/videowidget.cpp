@@ -1,5 +1,6 @@
 #include "mediaviewer/videowidget.h"
 #include "dlna/dlnautils.h"
+#include "ui/faicon.h"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -186,17 +187,11 @@ void ControlOverlay::paintAudioCircle(QPainter &p)
                      Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
         p.restore();
     } else {
-        // Music note (simplified)
-        p.setPen(Qt::NoPen);
-        p.setBrush(QColor(0x19, 0x19, 0x19));
-        int ns = d / 5;
-        QRect note(rect.center().x() - ns / 2,
-                   rect.center().y() - ns * 2, ns, ns * 3);
-        p.drawEllipse(note.left() - ns / 2, note.bottom() - ns / 2, ns, ns / 2);
-        p.drawRect(QRect(note.left(), note.top(), ns / 4, note.height()));
-        p.drawRect(QRect(note.right() - ns / 4, note.top() - ns / 2, ns / 4, ns * 2));
-        p.drawRect(QRect(note.left(), note.top(), ns, ns / 4));
-        p.drawEllipse(note.right() - ns / 2, note.bottom() - ns / 4 - ns / 2, ns, ns / 2);
+        constexpr uint MusicNote = 0xf8cf;
+        int iconSize = d / 2;
+        QPixmap px = FaIcon::pixmap(MusicNote, QColor(0xff, 0xff, 0xff), iconSize);
+        p.drawPixmap(rect.center().x() - iconSize / 2,
+                     rect.center().y() - iconSize / 2, px);
     }
 }
 
