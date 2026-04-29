@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QListWidget>
-#include "dlnaitem.h"
+#include "dlna/dlnaitem.h"
 
 class FavoritesPanel : public QWidget {
     Q_OBJECT

@@ -1,5 +1,5 @@
-#include "dlnaclient.h"
-#include "dlnaparser.h"
+#include "dlna/dlnaclient.h"
+#include "dlna/dlnaparser.h"
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -67,16 +67,6 @@ void DlnaClient::browse(const QString &controlUrl,
             emit browseError(reply->errorString());
             return;
         }
-        parseBrowseResponse(reply->readAll(), {});
+        emit browseReady(DlnaParser::parseBrowseResponse(reply->readAll()));
     });
-}
-
-void DlnaClient::parseBrowseResponse(const QByteArray &data, const QList<DlnaItem> &)
-{
-    QList<DlnaItem> items = DlnaParser::parseBrowseResponse(data);
-    if (items.isEmpty()) {
-        // Could be a genuine empty folder or a parse error — emit either way
-        // (parseBrowseResponse returns {} on error too, which is acceptable)
-    }
-    emit browseReady(items);
 }

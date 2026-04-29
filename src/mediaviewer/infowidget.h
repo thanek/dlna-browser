@@ -1,6 +1,6 @@
 #pragma once
-#include "dlnaitem.h"
-#include "mediawidget.h"
+#include "dlna/dlnaitem.h"
+#include "mediaviewer/mediawidget.h"
 
 class InfoWidget : public MediaWidget {
     Q_OBJECT

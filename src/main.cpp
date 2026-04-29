@@ -3,8 +3,8 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPixmap>
-#include "mainwindow.h"
-#include "faicon.h"
+#include "browser/mainwindow.h"
+#include "ui/faicon.h"
 
 static QIcon makeRoundedIcon()
 {

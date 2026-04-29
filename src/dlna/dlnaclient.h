@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QList>
-#include "dlnaitem.h"
+#include "dlna/dlnaitem.h"
 
 class DlnaClient : public QObject {
     Q_OBJECT
@@ -24,7 +24,6 @@ signals:
     void browseError(const QString &message);
 
 private:
-    void parseBrowseResponse(const QByteArray &data, const QList<DlnaItem> &partial);
     QString buildSoapBody(const QString &containerId, const QString &sortCriteria);
 
     QNetworkAccessManager *m_nam;

@@ -1,4 +1,4 @@
-#include "mediawidget.h"
+#include "mediaviewer/mediawidget.h"
 #include <QPainterPath>
 #include <QKeyEvent>
 #include <QFontMetrics>

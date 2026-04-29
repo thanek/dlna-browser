@@ -1,7 +1,8 @@
 #pragma once
 #include <QObject>
 #include <QTest>
-#include "dlnaparser.h"
+#include "dlna/dlnaparser.h"
+#include "dlna/dlnautils.h"
 
 class TestDlnaParser : public QObject {
     Q_OBJECT

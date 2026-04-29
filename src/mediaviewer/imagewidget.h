@@ -1,8 +1,8 @@
 #pragma once
 #include <QPixmap>
 #include <QNetworkAccessManager>
-#include "dlnaitem.h"
-#include "mediawidget.h"
+#include "dlna/dlnaitem.h"
+#include "mediaviewer/mediawidget.h"
 
 class ImageWidget : public MediaWidget {
     Q_OBJECT

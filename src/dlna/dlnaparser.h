@@ -3,8 +3,8 @@
 #include <QString>
 #include <QUrl>
 #include <QList>
-#include "dlnaitem.h"
-#include "dlnadiscovery.h"  // DlnaServer
+#include "dlna/dlnaitem.h"
+#include "dlna/dlnadiscovery.h"  // DlnaServer
 
 // Pure XML-parsing functions extracted from DlnaClient / DlnaDiscovery.
 // All methods are stateless and take raw data in, return value types out —
@@ -31,13 +31,5 @@ DlnaServer parseDeviceDescriptor(const QByteArray &descriptorXml,
 
 // Select the best icon URL from a parsed <iconList> element.
 QUrl bestIconUrl(const QDomElement &iconList, const QString &baseUrl);
-
-// Navigation helpers: return the nearest non-container row in model,
-// or -1 when none exists.
-int findPrevFile(const QList<DlnaItem> &items, int fromRow);
-int findNextFile(const QList<DlnaItem> &items, int fromRow);
-
-// Format milliseconds as "mm:ss" or "h:mm:ss".
-QString formatTime(qint64 ms);
 
 } // namespace DlnaParser

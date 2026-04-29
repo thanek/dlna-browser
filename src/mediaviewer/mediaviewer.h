@@ -1,6 +1,6 @@
 #pragma once
 #include <QMainWindow>
-#include "dlnaitem.h"
+#include "dlna/dlnaitem.h"
 
 class QStackedWidget;
 class QToolButton;

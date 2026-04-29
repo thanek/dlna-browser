@@ -6,8 +6,8 @@
 #include <QTimer>
 #include <QPixmap>
 #include <QNetworkAccessManager>
-#include "dlnaitem.h"
-#include "mediawidget.h"
+#include "dlna/dlnaitem.h"
+#include "mediaviewer/mediawidget.h"
 
 class ControlOverlay : public QWidget {
     Q_OBJECT

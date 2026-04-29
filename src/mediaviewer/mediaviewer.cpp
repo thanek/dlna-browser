@@ -1,9 +1,10 @@
-#include "mediaviewer.h"
-#include "videowidget.h"
-#include "imagewidget.h"
-#include "infowidget.h"
-#include "dlnamodel.h"
-#include "faicon.h"
+#include "mediaviewer/mediaviewer.h"
+#include "mediaviewer/videowidget.h"
+#include "mediaviewer/imagewidget.h"
+#include "mediaviewer/infowidget.h"
+#include "browser/dlnamodel.h"
+#include "dlna/dlnautils.h"
+#include "ui/faicon.h"
 
 #include <QStackedWidget>
 #include <QToolButton>
@@ -113,28 +114,21 @@ void MediaViewer::closeEvent(QCloseEvent *e)
 void MediaViewer::updateNavButtons()
 {
     if (!m_model) { m_btnPrev->setEnabled(false); m_btnNext->setEnabled(false); return; }
-
-    int prev = m_row - 1;
-    while (prev >= 0 && m_model->itemAt(prev).isContainer()) --prev;
-    m_btnPrev->setEnabled(prev >= 0);
-
-    int next = m_row + 1;
-    while (next < m_model->rowCount() && m_model->itemAt(next).isContainer()) ++next;
-    m_btnNext->setEnabled(next < m_model->rowCount());
+    const auto &items = m_model->items();
+    m_btnPrev->setEnabled(DlnaUtils::findPrevFile(items, m_row) >= 0);
+    m_btnNext->setEnabled(DlnaUtils::findNextFile(items, m_row) >= 0);
 }
 
 void MediaViewer::navigatePrev()
 {
     if (!m_model) return;
-    int row = m_row - 1;
-    while (row >= 0 && m_model->itemAt(row).isContainer()) --row;
+    int row = DlnaUtils::findPrevFile(m_model->items(), m_row);
     if (row >= 0) openRow(row);
 }
 
 void MediaViewer::navigateNext()
 {
     if (!m_model) return;
-    int row = m_row + 1;
-    while (row < m_model->rowCount() && m_model->itemAt(row).isContainer()) ++row;
-    if (row < m_model->rowCount()) openRow(row);
+    int row = DlnaUtils::findNextFile(m_model->items(), m_row);
+    if (row >= 0) openRow(row);
 }

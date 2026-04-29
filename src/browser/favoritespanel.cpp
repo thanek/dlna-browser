@@ -1,10 +1,11 @@
-#include "favoritespanel.h"
-#include "faicon.h"
+#include "browser/favoritespanel.h"
+#include "ui/faicon.h"
 
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QMenu>
+#include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QStandardPaths>
@@ -129,8 +130,21 @@ void FavoritesPanel::onContextMenu(const QPoint &pos)
     int row = m_list->row(item);
 
     QMenu menu(this);
+    QAction *renameAct = menu.addAction(tr("Rename…"));
     QAction *removeAct = menu.addAction(tr("Remove from favorites"));
-    if (menu.exec(m_list->viewport()->mapToGlobal(pos)) == removeAct) {
+
+    QAction *chosen = menu.exec(m_list->viewport()->mapToGlobal(pos));
+    if (chosen == renameAct) {
+        bool ok;
+        QString newName = QInputDialog::getText(this, tr("Rename favorite"),
+                                                tr("Name:"), QLineEdit::Normal,
+                                                m_favorites[row].name, &ok);
+        if (ok && !newName.trimmed().isEmpty()) {
+            m_favorites[row].name = newName.trimmed();
+            item->setText(newName.trimmed());
+            saveFavorites();
+        }
+    } else if (chosen == removeAct) {
         m_favorites.removeAt(row);
         delete m_list->takeItem(row);
         saveFavorites();

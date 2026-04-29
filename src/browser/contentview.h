@@ -4,7 +4,7 @@
 #include <QStackedWidget>
 #include <QListView>
 #include <QTreeView>
-#include "dlnamodel.h"
+#include "browser/dlnamodel.h"
 
 enum class ViewMode { List, Icons };
 enum class SortMode { NameAsc, NameDesc, DateAsc, DateDesc };
@@ -16,7 +16,6 @@ public:
 
     void setModel(DlnaModel *model);
     void setViewMode(ViewMode mode);
-    void setSortMode(SortMode mode);
     void setCurrentRow(int row);
     void setIconScale(int scale);   // 0-100
     ViewMode viewMode() const { return m_viewMode; }
@@ -27,12 +26,10 @@ signals:
 private:
     void setupListView();
     void setupIconView();
-    void applySort();
 
     QStackedWidget *m_stack;
     QListView *m_listView;
     QListView *m_iconView;
     DlnaModel *m_model = nullptr;
     ViewMode m_viewMode = ViewMode::List;
-    SortMode m_sortMode = SortMode::NameAsc;
 };

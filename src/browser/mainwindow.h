@@ -4,11 +4,11 @@
 #include <QList>
 #include <QNetworkAccessManager>
 #include <QSlider>
-#include "dlnaitem.h"
-#include "dlnadiscovery.h"
-#include "dlnaclient.h"
-#include "dlnamodel.h"
-#include "contentview.h"
+#include "dlna/dlnaitem.h"
+#include "dlna/dlnadiscovery.h"
+#include "dlna/dlnaclient.h"
+#include "browser/dlnamodel.h"
+#include "browser/contentview.h"
 
 class QToolBar;
 class QAction;
@@ -49,6 +49,7 @@ private:
     void navigateTo(const DlnaLocation &location);
     void browseCurrentLocation();
     void updateNavigationButtons();
+    void updateAddressBar();
     void loadThumbnails(const QList<DlnaItem> &items);
     void restoreFocus();
     QString sortCriteriaString() const;

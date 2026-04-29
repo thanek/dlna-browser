@@ -1,20 +1,10 @@
-#include "infowidget.h"
-#include "faicon.h"
+#include "mediaviewer/infowidget.h"
+#include "browser/dlnaicons.h"
 
 #include <QPainter>
 #include <QPainterPath>
 #include <QIcon>
 #include <QFontMetrics>
-
-static QIcon iconForItem(const DlnaItem &item)
-{
-    switch (item.type) {
-    case DlnaItemType::Video:  return FaIcon::icon(Fa::Video, QColor(0xe5, 0x39, 0x35), 72);
-    case DlnaItemType::Audio:  return FaIcon::icon(Fa::Music, QColor(0x8e, 0x24, 0xaa), 72);
-    case DlnaItemType::Image:  return FaIcon::icon(Fa::Image, QColor(0x43, 0xa0, 0x47), 72);
-    default:                   return FaIcon::icon(Fa::File,  QColor(0x75, 0x75, 0x75), 72);
-    }
-}
 
 InfoWidget::InfoWidget(QWidget *parent) : MediaWidget(parent)
 {
@@ -41,7 +31,7 @@ void InfoWidget::paintEvent(QPaintEvent *)
     const int iconSz = 72;
 
     QRect iconRect(cx - iconSz / 2, height() / 2 - 160, iconSz, iconSz);
-    iconForItem(m_item).paint(&p, iconRect);
+    dlnaIcon(m_item.type, 72).paint(&p, iconRect);
 
     QFont titleFont = font();
     titleFont.setPointSize(18);

@@ -13,39 +13,47 @@ qt_standard_project_setup()
 
 set(SOURCES
     src/main.cpp
-    src/faicon.cpp
-    src/faicon.h
-    src/mainwindow.cpp
-    src/mainwindow.h
-    src/dlnadiscovery.cpp
-    src/dlnadiscovery.h
-    src/dlnaclient.cpp
-    src/dlnaclient.h
-    src/dlnaitem.h
-    src/dlnaparser.cpp
-    src/dlnaparser.h
-    src/dlnamodel.cpp
-    src/dlnamodel.h
-    src/contentview.cpp
-    src/contentview.h
-    src/favoritespanel.cpp
-    src/favoritespanel.h
-    src/addressbar.cpp
-    src/addressbar.h
-    src/mediaviewer.cpp
-    src/mediaviewer.h
-    src/mediawidget.cpp
-    src/mediawidget.h
-    src/videowidget.cpp
-    src/videowidget.h
-    src/imagewidget.cpp
-    src/imagewidget.h
-    src/infowidget.cpp
-    src/infowidget.h
+    # dlna — protocol layer
+    src/dlna/dlnaitem.h
+    src/dlna/dlnadiscovery.h
+    src/dlna/dlnadiscovery.cpp
+    src/dlna/dlnaclient.h
+    src/dlna/dlnaclient.cpp
+    src/dlna/dlnaparser.h
+    src/dlna/dlnaparser.cpp
+    src/dlna/dlnautils.h
+    src/dlna/dlnautils.cpp
+    # ui — shared UI utilities
+    src/ui/faicon.h
+    src/ui/faicon.cpp
+    # browser — main browser window
+    src/browser/dlnaicons.h
+    src/browser/dlnamodel.h
+    src/browser/dlnamodel.cpp
+    src/browser/contentview.h
+    src/browser/contentview.cpp
+    src/browser/addressbar.h
+    src/browser/addressbar.cpp
+    src/browser/favoritespanel.h
+    src/browser/favoritespanel.cpp
+    src/browser/mainwindow.h
+    src/browser/mainwindow.cpp
+    # mediaviewer — media playback
+    src/mediaviewer/mediawidget.h
+    src/mediaviewer/mediawidget.cpp
+    src/mediaviewer/videowidget.h
+    src/mediaviewer/videowidget.cpp
+    src/mediaviewer/imagewidget.h
+    src/mediaviewer/imagewidget.cpp
+    src/mediaviewer/infowidget.h
+    src/mediaviewer/infowidget.cpp
+    src/mediaviewer/mediaviewer.h
+    src/mediaviewer/mediaviewer.cpp
     resources/resources.qrc
 )
 
 qt_add_executable(DlnaBrowser ${SOURCES})
+target_include_directories(DlnaBrowser PRIVATE src/)
 
 target_link_libraries(DlnaBrowser PRIVATE
     Qt6::Core

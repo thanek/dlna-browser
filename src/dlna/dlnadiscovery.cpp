@@ -1,5 +1,5 @@
-#include "dlnadiscovery.h"
-#include "dlnaparser.h"
+#include "dlna/dlnadiscovery.h"
+#include "dlna/dlnaparser.h"
 
 #include <QNetworkRequest>
 #include <QHostAddress>

@@ -1,4 +1,4 @@
-#include "contentview.h"
+#include "browser/contentview.h"
 
 #include <QVBoxLayout>
 #include <QSortFilterProxyModel>
@@ -76,11 +76,6 @@ void ContentView::setViewMode(ViewMode mode)
         m_stack->setCurrentWidget(m_listView);
     else
         m_stack->setCurrentWidget(m_iconView);
-}
-
-void ContentView::setSortMode(SortMode mode)
-{
-    m_sortMode = mode;
 }
 
 void ContentView::setIconScale(int scale)

@@ -4,7 +4,7 @@
 #include <QList>
 #include <QPixmap>
 #include <QHash>
-#include "dlnaitem.h"
+#include "dlna/dlnaitem.h"
 
 class QNetworkAccessManager;
 
@@ -27,6 +27,7 @@ public:
     void clear();
 
     DlnaItem itemAt(int row) const;
+    const QList<DlnaItem> &items() const { return m_items; }
 
     // QAbstractListModel
     int rowCount(const QModelIndex &parent = {}) const override;

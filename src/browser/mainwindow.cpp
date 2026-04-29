@@ -1,9 +1,9 @@
-#include "mainwindow.h"
-#include "addressbar.h"
-#include "contentview.h"
-#include "favoritespanel.h"
-#include "mediaviewer.h"
-#include "faicon.h"
+#include "browser/mainwindow.h"
+#include "browser/addressbar.h"
+#include "browser/contentview.h"
+#include "browser/favoritespanel.h"
+#include "mediaviewer/mediaviewer.h"
+#include "ui/faicon.h"
 
 #include <QSettings>
 
@@ -155,6 +155,14 @@ void MainWindow::setupToolBar()
     connect(m_btnView,    &QToolButton::clicked, this, &MainWindow::onViewToggled);
     connect(sortGroup, &QActionGroup::triggered, this, &MainWindow::onSortChanged);
 
+    connect(m_addressBar, &AddressBar::navigateTo, this, [this](const QList<DlnaLocation> &path) {
+        if (path.isEmpty()) { navigateHome(); return; }
+        m_forwardStack.clear();
+        m_history = path;
+        m_atHome = false;
+        browseCurrentLocation();
+    });
+
     updateNavigationButtons();
 }
 
@@ -220,7 +228,6 @@ void MainWindow::applySortMode(SortMode mode)
     m_actSortNameDesc->setChecked(mode == SortMode::NameDesc);
     m_actSortDateAsc ->setChecked(mode == SortMode::DateAsc);
     m_actSortDateDesc->setChecked(mode == SortMode::DateDesc);
-    m_contentView->setSortMode(mode);
 }
 
 SortMode MainWindow::effectiveSortMode() const
@@ -256,11 +263,7 @@ void MainWindow::navigateHome()
     restoreFocus();
     loadThumbnails(serverItems);
 
-    QList<DlnaLocation> breadcrumb;
-    DlnaLocation home;
-    home.title = tr("DLNA");
-    breadcrumb.append(home);
-    m_addressBar->setPath(breadcrumb);
+    updateAddressBar();
 
     updateNavigationButtons();
 
@@ -293,12 +296,7 @@ void MainWindow::browseCurrentLocation()
 
     m_client->browse(loc.controlUrl, loc.containerId, sortCriteriaString());
 
-    // Update address bar
-    QList<DlnaLocation> crumb;
-    DlnaLocation home; home.title = tr("DLNA");
-    crumb.append(home);
-    crumb.append(m_history);
-    m_addressBar->setPath(crumb);
+    updateAddressBar();
     updateNavigationButtons();
 }
 
@@ -340,6 +338,15 @@ void MainWindow::navigateUp()
     m_forwardStack.clear();
     m_history.removeLast();
     browseCurrentLocation();
+}
+
+void MainWindow::updateAddressBar()
+{
+    QList<DlnaLocation> crumb;
+    DlnaLocation home; home.title = tr("DLNA");
+    crumb.append(home);
+    crumb.append(m_history);
+    m_addressBar->setPath(crumb);
 }
 
 void MainWindow::updateNavigationButtons()
@@ -438,6 +445,7 @@ void MainWindow::onItemActivated(int row)
         m_atHome = false;
         updateNavigationButtons();
         m_statusLabel->setText(tr("Connecting to %1…").arg(item.title));
+        updateAddressBar();
         m_client->fetchControlUrl(item.id, item.title);
         return;
     }

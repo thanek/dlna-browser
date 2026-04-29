@@ -7,7 +7,7 @@
 #include <QNetworkReply>
 #include <QList>
 #include <QDomDocument>
-#include "dlnaitem.h"
+#include "dlna/dlnaitem.h"
 
 struct DlnaServer {
     QString name;

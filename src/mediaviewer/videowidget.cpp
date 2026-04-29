@@ -1,5 +1,5 @@
-#include "videowidget.h"
-#include "dlnaparser.h"
+#include "mediaviewer/videowidget.h"
+#include "dlna/dlnautils.h"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -103,7 +103,7 @@ QRectF ControlOverlay::muteButtonRect() const
 
 QString ControlOverlay::formatTime(qint64 ms)
 {
-    return DlnaParser::formatTime(ms);
+    return DlnaUtils::formatTime(ms);
 }
 
 // ─── Painting ────────────────────────────────────────────────────────────────

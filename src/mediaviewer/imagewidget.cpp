@@ -1,4 +1,4 @@
-#include "imagewidget.h"
+#include "mediaviewer/imagewidget.h"
 
 #include <QPainter>
 #include <QWheelEvent>

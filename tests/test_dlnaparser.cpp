@@ -290,27 +290,27 @@ void TestDlnaParser::parseDeviceDescriptor_noFriendlyName()
 
 void TestDlnaParser::formatTime_zero()
 {
-    QCOMPARE(DlnaParser::formatTime(0), "00:00");
+    QCOMPARE(DlnaUtils::formatTime(0), "00:00");
 }
 
 void TestDlnaParser::formatTime_seconds()
 {
-    QCOMPARE(DlnaParser::formatTime(5000),  "00:05");
-    QCOMPARE(DlnaParser::formatTime(59000), "00:59");
+    QCOMPARE(DlnaUtils::formatTime(5000),  "00:05");
+    QCOMPARE(DlnaUtils::formatTime(59000), "00:59");
 }
 
 void TestDlnaParser::formatTime_minutes()
 {
-    QCOMPARE(DlnaParser::formatTime(60000),   "01:00");
-    QCOMPARE(DlnaParser::formatTime(90000),   "01:30");
-    QCOMPARE(DlnaParser::formatTime(3599000), "59:59");
+    QCOMPARE(DlnaUtils::formatTime(60000),   "01:00");
+    QCOMPARE(DlnaUtils::formatTime(90000),   "01:30");
+    QCOMPARE(DlnaUtils::formatTime(3599000), "59:59");
 }
 
 void TestDlnaParser::formatTime_hours()
 {
-    QCOMPARE(DlnaParser::formatTime(3600000), "1:00:00");
-    QCOMPARE(DlnaParser::formatTime(3661000), "1:01:01");
-    QCOMPARE(DlnaParser::formatTime(7322000), "2:02:02");
+    QCOMPARE(DlnaUtils::formatTime(3600000), "1:00:00");
+    QCOMPARE(DlnaUtils::formatTime(3661000), "1:01:01");
+    QCOMPARE(DlnaUtils::formatTime(7322000), "2:02:02");
 }
 
 // ─── findPrevFile / findNextFile ──────────────────────────────────────────────
@@ -332,32 +332,32 @@ static QList<DlnaItem> makeItemList()
 
 void TestDlnaParser::findNextFile_fromStart()
 {
-    QCOMPARE(DlnaParser::findNextFile(makeItemList(), 0), 1);
+    QCOMPARE(DlnaUtils::findNextFile(makeItemList(), 0), 1);
 }
 
 void TestDlnaParser::findNextFile_skipsContainer()
 {
-    QCOMPARE(DlnaParser::findNextFile(makeItemList(), 1), 3);
+    QCOMPARE(DlnaUtils::findNextFile(makeItemList(), 1), 3);
 }
 
 void TestDlnaParser::findNextFile_atEnd()
 {
-    QCOMPARE(DlnaParser::findNextFile(makeItemList(), 4), -1);
+    QCOMPARE(DlnaUtils::findNextFile(makeItemList(), 4), -1);
 }
 
 void TestDlnaParser::findPrevFile_fromEnd()
 {
-    QCOMPARE(DlnaParser::findPrevFile(makeItemList(), 4), 3);
+    QCOMPARE(DlnaUtils::findPrevFile(makeItemList(), 4), 3);
 }
 
 void TestDlnaParser::findPrevFile_skipsContainer()
 {
-    QCOMPARE(DlnaParser::findPrevFile(makeItemList(), 3), 1);
+    QCOMPARE(DlnaUtils::findPrevFile(makeItemList(), 3), 1);
 }
 
 void TestDlnaParser::findPrevFile_atStart()
 {
-    QCOMPARE(DlnaParser::findPrevFile(makeItemList(), 1), -1);
+    QCOMPARE(DlnaUtils::findPrevFile(makeItemList(), 1), -1);
 }
 
 void TestDlnaParser::findPrevFile_noFiles()
@@ -365,8 +365,8 @@ void TestDlnaParser::findPrevFile_noFiles()
     QList<DlnaItem> items;
     DlnaItem c; c.type = DlnaItemType::Container;
     items << c << c;
-    QCOMPARE(DlnaParser::findPrevFile(items, 1), -1);
-    QCOMPARE(DlnaParser::findNextFile(items, 0), -1);
+    QCOMPARE(DlnaUtils::findPrevFile(items, 1), -1);
+    QCOMPARE(DlnaUtils::findNextFile(items, 0), -1);
 }
 
 QTEST_APPLESS_MAIN(TestDlnaParser)

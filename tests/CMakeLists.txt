@@ -3,9 +3,10 @@ find_package(Qt6 REQUIRED COMPONENTS Core Xml Network Test)
 add_executable(test_dlnaparser
     test_dlnaparser.h
     test_dlnaparser.cpp
-    ../src/dlnaparser.cpp
+    ../src/dlna/dlnaparser.cpp
+    ../src/dlna/dlnautils.cpp
 )
-target_include_directories(test_dlnaparser PRIVATE ../src)
+target_include_directories(test_dlnaparser PRIVATE ../src/)
 target_link_libraries(test_dlnaparser PRIVATE
     Qt6::Core
     Qt6::Xml
