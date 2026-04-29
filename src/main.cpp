@@ -8,22 +8,30 @@
 
 static QIcon makeRoundedIcon()
 {
-    QPixmap source = QIcon(":/icon.svg").pixmap(512, 512);
+    constexpr int sz = 512;
+    QPixmap source = QIcon(":/icon.svg").pixmap(sz, sz);
     if (source.isNull())
         return {};
 
+    // Use physical dimensions for result so DPR doesn't shrink the logical canvas.
     QPixmap result(source.width(), source.height());
     result.setDevicePixelRatio(source.devicePixelRatio());
     result.fill(Qt::transparent);
 
-    // Clip path in logical coordinates (DPR-independent: 0–512 range)
+    // macOS HIG: ~10% padding each side → 80% content (logical coords, 0–512 range).
+    const int margin = qRound(sz * 0.10);
+    const QRectF dest(margin, margin, sz - 2 * margin, sz - 2 * margin);
+
+    // Qt's SVG renderer ignores clip-path, so clip rounded corners manually.
+    // rx ≈ 110 * 0.8 = 88 (proportional to SVG's original rx=110 at full size).
     QPainterPath clip;
-    clip.addRoundedRect(QRectF(8, 8, 496, 496), 110, 110);
+    clip.addRoundedRect(dest, 88, 88);
 
     QPainter p(&result);
     p.setRenderHint(QPainter::Antialiasing);
+    p.setRenderHint(QPainter::SmoothPixmapTransform);
     p.setClipPath(clip);
-    p.drawPixmap(QPoint(0, 0), source);
+    p.drawPixmap(dest.toRect(), source);
 
     return QIcon(result);
 }
