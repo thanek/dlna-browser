@@ -187,7 +187,7 @@ void ControlOverlay::paintAudioCircle(QPainter &p)
                      Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
         p.restore();
     } else {
-        constexpr uint MusicNote = 0xf8cf;
+        constexpr uint MusicNote = 0xf001;
         int iconSize = d / 2;
         QPixmap px = FaIcon::pixmap(MusicNote, QColor(0xff, 0xff, 0xff), iconSize);
         p.drawPixmap(rect.center().x() - iconSize / 2,
