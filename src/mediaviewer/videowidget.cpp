@@ -375,10 +375,29 @@ void VideoWidget::paintEvent(QPaintEvent *)
 
     if (!m_audioMode && m_currentFrame.isValid()) {
         QImage img = m_currentFrame.toImage();
-        if (!img.isNull()) {
-            p.setRenderHint(QPainter::SmoothPixmapTransform);
-            p.drawImage(letterboxRect(img.size(), size()), img, img.rect());
+        if (img.isNull()) return;
+
+        p.setRenderHint(QPainter::SmoothPixmapTransform);
+
+        int angle = 0;
+        switch (m_currentFrame.rotation()) {
+        case QtVideo::Rotation::Clockwise90:  angle = 90;  break;
+        case QtVideo::Rotation::Clockwise180: angle = 180; break;
+        case QtVideo::Rotation::Clockwise270: angle = 270; break;
+        default: break;
         }
+
+        const bool swapped = (angle % 180 != 0);
+        QSize displaySize = swapped ? img.size().transposed() : img.size();
+        QRectF dest = letterboxRect(displaySize, size());
+
+        p.save();
+        p.translate(dest.center());
+        p.rotate(angle);
+        double hw = swapped ? dest.height() / 2.0 : dest.width() / 2.0;
+        double hh = swapped ? dest.width() / 2.0 : dest.height() / 2.0;
+        p.drawImage(QRectF(-hw, -hh, hw * 2, hh * 2), img, img.rect());
+        p.restore();
     }
 }
 
