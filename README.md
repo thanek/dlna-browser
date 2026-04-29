@@ -12,11 +12,11 @@ A desktop DLNA/UPnP media browser built in C++20 with Qt 6. Discovers media serv
 
 ### Content browsing
 - Full folder hierarchy navigation
-- Breadcrumb address bar with back / forward / up / home history
+- Clickable breadcrumb bar based on absolute path (compatible with Favorites links)
 - List view and icon view, toggled from the toolbar
 - Icon size slider in the status bar
 - Sort by name or date (ascending/descending), saved per folder and inherited by subfolders
-- Favorites panel for bookmarking locations
+- Favorites panel for bookmarking locations (with rename and remove actions)
 
 ### Media playback
 - Dedicated `MediaViewer` window opened on item activation
@@ -38,11 +38,11 @@ A desktop DLNA/UPnP media browser built in C++20 with Qt 6. Discovers media serv
 
 | Dependency | Version | Notes |
 |------------|---------|-------|
-| **Qt 6** | ≥ 6.4 | Core, Gui, Widgets, Network, Xml, Multimedia, MultimediaWidgets |
+| **Qt 6** | ≥ 6.7 | Core, Gui, Widgets, Network, Xml, Multimedia, MultimediaWidgets, Svg |
 | **CMake** | ≥ 3.20 | Build system |
 | **C++ compiler** | C++20 | Clang (macOS), GCC, or MSVC |
 
-Qt 6 is the only external dependency. The **Font Awesome 6 Solid** typeface is embedded in the binary via Qt Resource System (`resources/resources.qrc`) — no system fonts required.
+Qt 6 is the only external dependency. The **Font Awesome 5 Free Solid** typeface is embedded in the binary via Qt Resource System (`resources/resources.qrc`) — no system fonts required.
 
 ### Installing Qt 6
 
@@ -96,7 +96,7 @@ cmake --build build --config Release
 
 ## Tests
 
-Unit tests cover XML parsing (DIDL-Lite, SOAP responses, device descriptors) and helper functions. They require only Qt 6 Test — no network or GUI event loop needed.
+Unit tests cover XML parsing (DIDL-Lite, SOAP responses, device descriptors), helper functions, and the list model. They require only Qt 6 Test — no network or GUI event loop needed.
 
 ```bash
 make test
@@ -110,30 +110,38 @@ ctest --test-dir build --output-on-failure
 
 ```
 src/
-├── main.cpp              # Entry point, QApplication setup
-├── mainwindow.*          # Main window, navigation, history
-├── dlnadiscovery.*       # SSDP server discovery
-├── dlnaclient.*          # ContentDirectory SOAP requests
-├── dlnaparser.*          # Pure XML parsing (DIDL-Lite, descriptors) — unit-tested
-├── dlnamodel.*           # QAbstractListModel for folder contents
-├── dlnaitem.h            # Data types: DlnaItem, DlnaLocation
-├── contentview.*         # List/icon view widget with mode switching
-├── mediaviewer.*         # Playback window (QMainWindow)
-├── videowidget.*         # Video/audio player (QVideoSink-based)
-├── imagewidget.*         # Image viewer with zoom and pan
-├── infowidget.*          # File info card
-├── addressbar.*          # Breadcrumb bar
-├── favoritespanel.*      # Favorites panel
-└── faicon.*              # Font Awesome icons rendered from TTF
+├── main.cpp                   # Entry point, QApplication setup, app icon
+├── dlna/
+│   ├── dlnadiscovery.*        # SSDP server discovery
+│   ├── dlnaclient.*           # ContentDirectory SOAP requests
+│   ├── dlnaparser.*           # Pure XML parsing (DIDL-Lite, descriptors) — unit-tested
+│   ├── dlnautils.*            # Shared helpers: formatTime, findPrev/NextFile
+│   └── dlnaitem.h             # Data types: DlnaItem, DlnaLocation, DlnaItemType
+├── browser/
+│   ├── mainwindow.*           # Main window, navigation, history
+│   ├── dlnamodel.*            # QAbstractListModel for folder contents
+│   ├── dlnaicons.h            # Centralised type→icon mapping
+│   ├── contentview.*          # List/icon view widget with mode switching
+│   ├── addressbar.*           # Clickable breadcrumb bar
+│   └── favoritespanel.*       # Favorites panel
+├── ui/
+│   └── faicon.*               # Font Awesome icons rendered from TTF
+└── mediaviewer/
+    ├── mediaviewer.*          # Playback window (QMainWindow)
+    ├── videowidget.*          # Video/audio player (QVideoSink-based)
+    ├── imagewidget.*          # Image viewer with zoom and pan
+    └── infowidget.*           # File info card
 tests/
-└── test_dlnaparser.cpp   # Qt Test unit tests (30 cases)
+├── test_dlnaparser.*          # Qt Test unit tests (~30 cases)
+└── test_dlnamodel.*           # Qt Test unit tests (13 cases)
 ```
 
 ### Notable design decisions
 
-- **QVideoSink instead of QVideoWidget** — avoids the macOS Metal/Qt layer conflict; frames are rendered manually in `paintEvent()`, allowing the control overlay to sit on top without native-layer issues.
-- **DlnaParser as pure functions** — all XML parsing logic is extracted into a stateless `DlnaParser` namespace, making it testable without a network connection or Qt event loop.
-- **Font Awesome embedded in QRC** — icons have no dependency on installed system fonts; the TTF file is compiled into the binary.
+- **QVideoSink instead of QVideoWidget** — avoids the macOS Metal/Qt layer conflict; frames are rendered manually in `paintEvent()`, allowing the control overlay to sit on top without native-layer issues. Video rotation metadata (`QVideoFrame::rotation()`) is applied manually via QPainter transform.
+- **DlnaParser as pure functions** — all XML parsing logic is extracted into a stateless `DlnaParser` namespace; shared helpers live in `DlnaUtils`. Both are testable without a network connection or Qt event loop.
+- **Absolute-path breadcrumb** — `AddressBar` stores the full path internally and emits it on click, so navigation works correctly whether coming from the folder tree or a Favorites bookmark.
+- **Font Awesome 5 Free Solid embedded in QRC** — icons have no dependency on installed system fonts; the TTF file is compiled into the binary.
 
 ### AI Notice
 
