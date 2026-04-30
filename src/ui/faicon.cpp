@@ -36,7 +36,7 @@ QPixmap FaIcon::pixmap(uint codePoint, QColor color, int size, double scale)
     f.setPixelSize(maxGlyph);
     p.setFont(f);
 
-    QString glyph = QString::fromUcs4(&codePoint, 1);
+    QString glyph = QString::fromUcs4(reinterpret_cast<const char32_t *>(&codePoint), 1);
     QFontMetrics fm(f);
     QRect br = fm.boundingRect(glyph);
     if (br.width() > maxGlyph || br.height() > maxGlyph) {

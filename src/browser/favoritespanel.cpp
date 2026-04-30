@@ -7,6 +7,7 @@
 #include <QMenu>
 #include <QInputDialog>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
 #include <QDir>
