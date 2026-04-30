@@ -8,16 +8,8 @@ on:
 
 jobs:
   build-macos:
-    name: macOS — ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-13
-            arch: x86_64
-          - os: macos-latest
-            arch: arm64
+    name: macOS — arm64
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -40,11 +32,11 @@ jobs:
           APP=$(find build -name "*.app" -maxdepth 3 | head -1)
           macdeployqt "$APP" -dmg
           DMG="${APP%.app}.dmg"
-          mv "$DMG" "DlnaBrowser-macOS-${{ matrix.arch }}.dmg"
+          mv "$DMG" "DlnaBrowser-macOS-arm64.dmg"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: DlnaBrowser-macOS-${{ matrix.arch }}
+          name: DlnaBrowser-macOS-arm64
           path: "*.dmg"
           if-no-files-found: error
 
