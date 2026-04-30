@@ -145,7 +145,7 @@ jobs:
             -exec patchelf --set-rpath '$ORIGIN/../../' {} \;
 
       - name: Install fpm
-        run: gem install fpm --no-document
+        run: sudo gem install fpm --no-document
 
       - name: Create package
         run: |
