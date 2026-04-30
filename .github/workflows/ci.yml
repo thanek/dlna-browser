@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libxkbcommon-dev \
+            libxcb-cursor-dev
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.3'
+          host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
+          arch: ${{ runner.os == 'Windows' && 'win64_msvc2022_64' || '' }}
+          cache: true
+
+      - name: Build
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --config Debug --parallel
+
+      - name: Test
+        working-directory: build
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --build-config Debug --output-on-failure --parallel 4

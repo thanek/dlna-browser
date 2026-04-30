@@ -1,0 +1,184 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: macOS — ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            arch: x86_64
+          - os: macos-latest
+            arch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.3'
+          host: mac
+          cache: true
+
+      - name: Build
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --parallel
+
+      - name: Package DMG
+        run: |
+          APP=$(find build -name "*.app" -maxdepth 3 | head -1)
+          macdeployqt "$APP" -dmg
+          DMG="${APP%.app}.dmg"
+          mv "$DMG" "DlnaBrowser-macOS-${{ matrix.arch }}.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DlnaBrowser-macOS-${{ matrix.arch }}
+          path: "*.dmg"
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows — x86_64
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.3'
+          host: windows
+          arch: win64_msvc2022_64
+          cache: true
+
+      - name: Build
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --parallel
+
+      - name: Deploy & Package
+        shell: pwsh
+        run: |
+          cmake --install build --prefix dist --config Release
+          windeployqt "dist\bin\DlnaBrowser.exe" --release --no-translations
+          Compress-Archive -Path dist\* -DestinationPath DlnaBrowser-Windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DlnaBrowser-Windows-x64
+          path: DlnaBrowser-Windows-x64.zip
+          if-no-files-found: error
+
+  build-linux:
+    name: Linux — ${{ matrix.pkg }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: [deb, rpm]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libxkbcommon-dev \
+            libxcb-cursor-dev \
+            patchelf \
+            rpm
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.3'
+          host: linux
+          cache: true
+
+      - name: Build
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build --parallel
+
+      - name: Install to staging
+        run: cmake --install build --prefix staging
+
+      - name: Bundle Qt libraries
+        run: |
+          QT_LIBS=$(qmake -query QT_INSTALL_LIBS 2>/dev/null || echo "$QT_ROOT_DIR/lib")
+          QT_PLUGINS=$(qmake -query QT_INSTALL_PLUGINS 2>/dev/null || echo "$QT_ROOT_DIR/plugins")
+
+          mkdir -p staging/lib/DlnaBrowser/plugins
+
+          for lib in Core Gui Widgets Network Xml Multimedia MultimediaWidgets DBus XcbQpa OpenGL OpenGLWidgets; do
+            lib_file="$QT_LIBS/libQt6${lib}.so.6"
+            [ -f "$lib_file" ] && cp "$lib_file" staging/lib/DlnaBrowser/
+          done
+
+          for plugin in platforms imageformats multimedia xcbglintegrations; do
+            [ -d "$QT_PLUGINS/$plugin" ] && cp -r "$QT_PLUGINS/$plugin" staging/lib/DlnaBrowser/plugins/
+          done
+
+          # Redirect binary RPATH to bundled Qt libs
+          patchelf --set-rpath '$ORIGIN/../lib/DlnaBrowser' staging/bin/DlnaBrowser
+
+          # Redirect plugin RPATHs so they find bundled Qt libs
+          find staging/lib/DlnaBrowser/plugins -name '*.so' \
+            -exec patchelf --set-rpath '$ORIGIN/../../' {} \;
+
+      - name: Install fpm
+        run: gem install fpm --no-document
+
+      - name: Create package
+        run: |
+          VERSION=$(grep -oP '(?<=project\(DlnaBrowser VERSION )\S+' CMakeLists.txt)
+          fpm -s dir -t ${{ matrix.pkg }} \
+            -n dlna-browser \
+            -v "$VERSION" \
+            --description "DLNA media browser" \
+            --license MIT \
+            --url "https://github.com/${{ github.repository }}" \
+            -C staging \
+            .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DlnaBrowser-Linux-${{ matrix.pkg }}
+          path: |
+            *.deb
+            *.rpm
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
