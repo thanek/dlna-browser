@@ -1,4 +1,5 @@
 #include "browser/mainwindow.h"
+#include "browser/aboutdialog.h"
 #include "browser/addressbar.h"
 #include "browser/contentview.h"
 #include "browser/favoritespanel.h"
@@ -15,6 +16,7 @@
 #include <QLabel>
 #include <QStatusBar>
 #include <QMenu>
+#include <QMenuBar>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QPixmap>
@@ -36,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi();
     setupToolBar();
     setupStatusBar();
+    setupMenuBar();
 
     connect(m_discovery, &DlnaDiscovery::serverFound,
             this, &MainWindow::onServerFound);
@@ -72,6 +75,22 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() = default;
+
+// ── Menu bar ─────────────────────────────────────────────────────────────────
+
+void MainWindow::setupMenuBar()
+{
+    auto *helpMenu = menuBar()->addMenu(tr("Help"));
+    QAction *actAbout = helpMenu->addAction(tr("About DLNA Browser…"));
+    actAbout->setMenuRole(QAction::AboutRole);
+    connect(actAbout, &QAction::triggered, this, &MainWindow::showAbout);
+}
+
+void MainWindow::showAbout()
+{
+    AboutDialog dlg(this);
+    dlg.exec();
+}
 
 // ── UI Setup ────────────────────────────────────────────────────────────────
 

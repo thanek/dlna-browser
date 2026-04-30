@@ -41,9 +41,11 @@ private slots:
     void onSortChanged(QAction *action);
     void onViewToggled();
     void addCurrentToFavorites();
+    void showAbout();
 
 private:
     void setupUi();
+    void setupMenuBar();
     void setupToolBar();
     void setupStatusBar();
     void navigateTo(const DlnaLocation &location);

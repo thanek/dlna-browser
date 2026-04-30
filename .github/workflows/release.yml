@@ -27,6 +27,7 @@ jobs:
         with:
           version: '6.8.3'
           host: mac
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Build
@@ -60,6 +61,7 @@ jobs:
           version: '6.8.3'
           host: windows
           arch: win64_msvc2022_64
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Build
@@ -108,6 +110,7 @@ jobs:
         with:
           version: '6.8.3'
           host: linux
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Build

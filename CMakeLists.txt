@@ -38,6 +38,8 @@ set(SOURCES
     src/browser/favoritespanel.cpp
     src/browser/mainwindow.h
     src/browser/mainwindow.cpp
+    src/browser/aboutdialog.h
+    src/browser/aboutdialog.cpp
     # mediaviewer — media playback
     src/mediaviewer/mediawidget.h
     src/mediaviewer/mediawidget.cpp
@@ -54,6 +56,8 @@ set(SOURCES
 
 qt_add_executable(DlnaBrowser ${SOURCES})
 target_include_directories(DlnaBrowser PRIVATE src/)
+
+target_compile_definitions(DlnaBrowser PRIVATE APP_VERSION="${PROJECT_VERSION}")
 
 target_link_libraries(DlnaBrowser PRIVATE
     Qt6::Core

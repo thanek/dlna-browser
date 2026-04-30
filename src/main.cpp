@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("DlnaBrowser");
     app.setOrganizationName("dlna-browser");
     app.setApplicationDisplayName("DLNA Browser");
+    app.setApplicationVersion(APP_VERSION);
     app.setWindowIcon(makeRoundedIcon());
 
     MainWindow w;
