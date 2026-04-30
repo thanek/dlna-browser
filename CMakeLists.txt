@@ -75,11 +75,16 @@ if(WIN32)
 endif()
 
 if(APPLE)
+    set(APP_ICON "${CMAKE_SOURCE_DIR}/resources/DlnaBrowser.icns")
+    set_source_files_properties(${APP_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(DlnaBrowser PRIVATE ${APP_ICON})
+
     set_target_properties(DlnaBrowser PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "DLNA Browser"
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        MACOSX_BUNDLE_ICON_FILE "DlnaBrowser.icns"
     )
 endif()
 
