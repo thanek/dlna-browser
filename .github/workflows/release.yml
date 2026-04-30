@@ -56,6 +56,16 @@ jobs:
           modules: 'qtmultimedia'
           cache: true
 
+      - name: Install NSIS
+        run: choco install nsis --no-progress -y
+
+      - name: Generate Windows icon
+        shell: pwsh
+        run: |
+          magick -background none resources/icon.svg `
+            -define icon:auto-resize="256,128,64,48,32,16" `
+            resources/DlnaBrowser.ico
+
       - name: Build
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
@@ -64,14 +74,15 @@ jobs:
       - name: Deploy & Package
         shell: pwsh
         run: |
+          $VERSION = (Select-String -Path CMakeLists.txt -Pattern 'project\(DlnaBrowser VERSION (\S+)').Matches[0].Groups[1].Value.Trim()
           cmake --install build --prefix dist --config Release
           windeployqt "dist\bin\DlnaBrowser.exe" --release --no-translations
-          Compress-Archive -Path dist\* -DestinationPath DlnaBrowser-Windows-x64.zip
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /NOCD /DVERSION=$VERSION packaging\installer.nsi
 
       - uses: actions/upload-artifact@v4
         with:
           name: DlnaBrowser-Windows-x64
-          path: DlnaBrowser-Windows-x64.zip
+          path: DlnaBrowser-Windows-x64-Setup.exe
           if-no-files-found: error
 
   build-linux:
@@ -120,7 +131,7 @@ jobs:
 
           mkdir -p staging/lib/DlnaBrowser/plugins
 
-          for lib in Core Gui Widgets Network Xml Multimedia MultimediaWidgets DBus XcbQpa OpenGL OpenGLWidgets; do
+          for lib in Core Gui Widgets Network Xml Multimedia MultimediaWidgets Svg DBus XcbQpa OpenGL OpenGLWidgets; do
             lib_file="$QT_LIBS/libQt6${lib}.so.6"
             [ -f "$lib_file" ] && cp "$lib_file" staging/lib/DlnaBrowser/
           done
@@ -129,12 +140,44 @@ jobs:
             [ -d "$QT_PLUGINS/$plugin" ] && cp -r "$QT_PLUGINS/$plugin" staging/lib/DlnaBrowser/plugins/
           done
 
-          # Redirect binary RPATH to bundled Qt libs
-          patchelf --set-rpath '$ORIGIN/../lib/DlnaBrowser' staging/bin/DlnaBrowser
+          # Bundle ICU libraries that Qt6Core depends on (version varies by runner)
+          for icu_lib in $(ldd staging/lib/DlnaBrowser/libQt6Core.so.6 2>/dev/null \
+              | grep -oP '/\S+libicu\S+\.so\.\d+'); do
+            [ -f "$icu_lib" ] && cp "$icu_lib" staging/lib/DlnaBrowser/
+          done
+
+          # Bundle Qt-provided libs required by plugins (FFmpeg for multimedia,
+          # WaylandClient for wayland platform, etc.) — scan originals before patchelf
+          for plugin_dir in platforms imageformats multimedia xcbglintegrations; do
+            [ -d "$QT_PLUGINS/$plugin_dir" ] || continue
+            while IFS= read -r so; do
+              while IFS= read -r dep; do
+                dest="staging/lib/DlnaBrowser/$(basename "$dep")"
+                if [ -f "$dep" ] && [ ! -f "$dest" ]; then
+                  cp "$dep" "$dest"
+                fi
+              done < <(ldd "$so" 2>/dev/null | grep -oP "$QT_LIBS/\S+\.so\.\S+" || true)
+            done < <(find "$QT_PLUGINS/$plugin_dir" -name '*.so')
+          done
+
+          # Move binary into the private lib dir so qt.conf doesn't leak to other apps
+          mv staging/bin/DlnaBrowser staging/lib/DlnaBrowser/DlnaBrowser
+
+          # Redirect binary RPATH to bundled Qt libs (same dir now)
+          patchelf --set-rpath '$ORIGIN' staging/lib/DlnaBrowser/DlnaBrowser
 
           # Redirect plugin RPATHs so they find bundled Qt libs
           find staging/lib/DlnaBrowser/plugins -name '*.so' \
             -exec patchelf --set-rpath '$ORIGIN/../../' {} \;
+
+          # qt.conf next to the private binary — does NOT affect other Qt apps in /usr/bin
+          printf '[Paths]\nPlugins = /usr/lib/DlnaBrowser/plugins\n' \
+            > staging/lib/DlnaBrowser/qt.conf
+
+          # Thin launcher wrapper exposed in PATH
+          printf '#!/bin/sh\nexec /usr/lib/DlnaBrowser/DlnaBrowser "$@"\n' \
+            > staging/bin/DlnaBrowser
+          chmod +x staging/bin/DlnaBrowser
 
       - name: Install fpm
         run: sudo gem install fpm --no-document
@@ -148,6 +191,8 @@ jobs:
             --description "DLNA media browser" \
             --license MIT \
             --url "https://github.com/${{ github.repository }}" \
+            --after-install packaging/postinst.sh \
+            --prefix /usr \
             -C staging \
             .
 

@@ -363,11 +363,11 @@
        fy="451.92878"
        r="163.44757"
        gradientUnits="userSpaceOnUse" />
-    <clipPath id="iconClip">
-      <rect x="8" y="8" width="496" height="496" rx="110" />
-    </clipPath>
+    <mask id="iconMask" maskUnits="userSpaceOnUse">
+      <rect x="8" y="8" width="496" height="496" rx="110" fill="white"/>
+    </mask>
   </defs>
-  <g clip-path="url(#iconClip)">
+  <g mask="url(#iconMask)">
   <rect
      x="8"
      y="8"
@@ -379,6 +379,7 @@
      style="display:inline;opacity:1" />
   <g
      filter="url(#blur)"
+     mask="url(#iconMask)"
      id="g18">
     <ellipse
        cx="87.821732"

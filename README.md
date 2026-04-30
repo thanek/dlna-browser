@@ -4,9 +4,17 @@ A desktop DLNA/UPnP media browser built in C++20 with Qt 6. Discovers media serv
 
 ---
 
-[![Latest Release](https://img.shields.io/github/v/release/thanek/dlna-browser)](https://github.com/thanek/dlna-browser/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/thanek/dlna-browser)](https://github.com/thanek/dlna-browser/releases/latest) [![CI](https://github.com/thanek/dlna-browser/actions/workflows/ci.yml/badge.svg)](https://github.com/thanek/dlna-browser/actions/workflows/ci.yml)
 
 **Download:** [MacOS](https://github.com/thanek/dlna-browser/releases/latest) · [Windows](https://github.com/thanek/dlna-browser/releases/latest) · [Linux .deb](https://github.com/thanek/dlna-browser/releases/latest) · [Linux .rpm](https://github.com/thanek/dlna-browser/releases/latest) · [.tar.gz](https://github.com/thanek/dlna-browser/releases/latest)
+
+### MacOS — first launch
+
+The package is not notarized, so Gatekeeper will block it on first open. Run this once in Terminal after installing:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/DlnaBrowser.app
+```
 
 
 

@@ -72,6 +72,12 @@ target_link_libraries(DlnaBrowser PRIVATE
 if(WIN32)
     set_target_properties(DlnaBrowser PROPERTIES WIN32_EXECUTABLE TRUE)
     target_link_libraries(DlnaBrowser PRIVATE ws2_32)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/resources/DlnaBrowser.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/DlnaBrowser.rc
+        @ONLY
+    )
+    target_sources(DlnaBrowser PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/DlnaBrowser.rc)
 endif()
 
 if(APPLE)
@@ -92,6 +98,14 @@ install(TARGETS DlnaBrowser
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(UNIX AND NOT APPLE)
+    install(FILES resources/DlnaBrowser.desktop
+        DESTINATION share/applications)
+    install(FILES resources/icon.svg
+        DESTINATION share/icons/hicolor/scalable/apps
+        RENAME dlna-browser.svg)
+endif()
 
 enable_testing()
 add_subdirectory(tests)

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DLNA Browser
+GenericName=Media Browser
+Comment=Browse and play media from DLNA servers
+Exec=DlnaBrowser
+Icon=dlna-browser
+Categories=Network;AudioVideo;Video;
+Keywords=dlna;upnp;media;network;
+StartupNotify=true
