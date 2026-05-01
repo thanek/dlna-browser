@@ -4,6 +4,7 @@
 #include <QSortFilterProxyModel>
 #include <QApplication>
 #include <QPalette>
+#include <QKeyEvent>
 
 ContentView::ContentView(QWidget *parent)
     : QWidget(parent)
@@ -21,6 +22,9 @@ ContentView::ContentView(QWidget *parent)
     m_stack->addWidget(m_listView);
     m_stack->addWidget(m_iconView);
     m_stack->setCurrentWidget(m_listView);
+
+    m_listView->installEventFilter(this);
+    m_iconView->installEventFilter(this);
 
     QColor selBg = qApp->palette().color(QPalette::Highlight).darker(170);
     const QString itemStyle = QString(
@@ -98,4 +102,19 @@ void ContentView::setCurrentRow(int row)
     m_listView->scrollTo(idx);
     m_iconView->setCurrentIndex(idx);
     m_iconView->scrollTo(idx);
+}
+
+bool ContentView::eventFilter(QObject *obj, QEvent *event)
+{
+    if ((obj == m_listView || obj == m_iconView) && event->type() == QEvent::KeyPress) {
+        auto *ke = static_cast<QKeyEvent *>(event);
+        if (ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) {
+            auto *view = static_cast<QListView *>(obj);
+            QModelIndex idx = view->currentIndex();
+            if (idx.isValid())
+                emit itemActivated(idx.row());
+            return true;
+        }
+    }
+    return QWidget::eventFilter(obj, event);
 }

@@ -36,7 +36,6 @@ private:
     void paintTitleBar(QPainter &p);
     void paintControlBar(QPainter &p);
     void paintPlayIcon(QPainter &p, QRectF r, bool playing);
-    void paintMuteIcon(QPainter &p, QRectF r, bool muted);
 
     QRectF controlBarRect() const;
     QRectF titleBarRect() const;

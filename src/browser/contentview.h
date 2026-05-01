@@ -23,6 +23,9 @@ public:
 signals:
     void itemActivated(int row);
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 private:
     void setupListView();
     void setupIconView();

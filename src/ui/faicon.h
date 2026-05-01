@@ -20,13 +20,16 @@ namespace Fa {
     constexpr uint Star         = 0xf005;
     constexpr uint StarOutline  = 0xf006;  // star (regular) — also in solid set as empty
     constexpr uint CircleInfo   = 0xf05a;
-    constexpr uint Play         = 0xf144;  // circle-play
+    constexpr uint Play         = 0xf04b;  // play
     constexpr uint SortAlpha    = 0xf15d;
     constexpr uint SortAlphaDesc= 0xf15e;
     constexpr uint SortAmount   = 0xf160;
     constexpr uint Calendar     = 0xf073;
     constexpr uint Minimize     = 0xf068;  // minus — small end of size slider
     constexpr uint Maximize     = 0xf067;  // plus  — large end of size slider
+    constexpr uint VolumeUp     = 0xf028;  // volume on
+    constexpr uint VolumeMute   = 0xf6a9;  // colume off
+    constexpr uint Pause        = 0xf04c;  // pause
 }
 
 class FaIcon {

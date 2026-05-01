@@ -111,52 +111,11 @@ QString ControlOverlay::formatTime(qint64 ms)
 
 void ControlOverlay::paintPlayIcon(QPainter &p, QRectF r, bool playing)
 {
-    p.save();
-    p.setPen(Qt::NoPen);
-    p.setBrush(Qt::white);
-    if (playing) {
-        // Pause: two rectangles
-        double bw = r.width() * 0.28;
-        double gap = r.width() * 0.18;
-        p.drawRect(QRectF(r.left(), r.top(), bw, r.height()));
-        p.drawRect(QRectF(r.left() + bw + gap, r.top(), bw, r.height()));
-    } else {
-        // Play: triangle
-        QPolygonF tri;
-        tri << r.topLeft()
-            << QPointF(r.right(), r.center().y())
-            << r.bottomLeft();
-        p.drawPolygon(tri);
-    }
-    p.restore();
+    uint glyph = playing ? Fa::Pause : Fa::Play;
+    QPixmap px = FaIcon::pixmap(glyph, Qt::white, int(r.height()));
+    p.drawPixmap(r.toRect(), px);
 }
 
-void ControlOverlay::paintMuteIcon(QPainter &p, QRectF r, bool muted)
-{
-    p.save();
-    p.setPen(QPen(Qt::white, 2));
-    p.setBrush(Qt::NoBrush);
-    double cx = r.center().x();
-    double cy = r.center().y();
-    double sz = qMin(r.width(), r.height()) * 0.4;
-    // Speaker body (square + triangle)
-    p.setBrush(Qt::white);
-    p.setPen(Qt::NoPen);
-    QRectF body(cx - sz * 1.1, cy - sz * 0.5, sz * 0.6, sz);
-    p.drawRect(body);
-    QPolygonF cone;
-    cone << QPointF(cx - sz * 0.5, cy - sz * 0.5)
-         << QPointF(cx + sz * 0.5, cy - sz)
-         << QPointF(cx + sz * 0.5, cy + sz)
-         << QPointF(cx - sz * 0.5, cy + sz * 0.5);
-    p.drawPolygon(cone);
-    if (muted) {
-        p.setPen(QPen(QColor(0xe0, 0x60, 0x60), 2));
-        p.drawLine(QPointF(cx + sz * 0.8, cy - sz * 0.8),
-                   QPointF(cx - sz * 0.8, cy + sz * 0.8));
-    }
-    p.restore();
-}
 
 void ControlOverlay::paintTitleBar(QPainter &p)
 {
@@ -233,7 +192,10 @@ void ControlOverlay::paintControlBar(QPainter &p)
     paintPlayIcon(p, playButtonRect(), m_playing);
 
     // Mute icon
-    paintMuteIcon(p, muteButtonRect(), m_muted);
+    QRectF mr = muteButtonRect();
+    uint muteGlyph = m_muted ? Fa::VolumeMute : Fa::VolumeUp;
+    QPixmap muteIcon = FaIcon::pixmap(muteGlyph, Qt::white, int(mr.height()));
+    p.drawPixmap(mr.toRect(), muteIcon);
 }
 
 void ControlOverlay::paintEvent(QPaintEvent *)
