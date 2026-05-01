@@ -37,11 +37,8 @@ public:
     // Must be called once before using icon() — loads the font into Qt's font database.
     static void init();
 
-    // Render a Font Awesome code point as a QIcon.
-    // size: pixel size of the rendered pixmap (it is square)
     static QIcon icon(uint codePoint,
                       QColor color = Qt::white,
-                      int size = 20,
                       double scale = 0.75);
 
     // Convenience: render into a QPixmap (e.g. for painting directly)

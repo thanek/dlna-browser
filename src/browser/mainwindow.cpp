@@ -324,7 +324,7 @@ void MainWindow::navigateBack()
     if (m_history.size() <= 1) {
         if (!m_history.isEmpty()) {
             const DlnaLocation &leaving = m_history.last();
-            m_pendingFocusId = (leaving.containerId == "0") ? leaving.serverName : leaving.containerId;
+            m_pendingFocusId = focusIdFor(leaving);
             m_forwardStack.prepend(m_history.takeLast());
         }
         m_atHome = true;
@@ -332,7 +332,7 @@ void MainWindow::navigateBack()
         return;
     }
     const DlnaLocation &leaving = m_history.last();
-    m_pendingFocusId = (leaving.containerId == "0") ? leaving.serverName : leaving.containerId;
+    m_pendingFocusId = focusIdFor(leaving);
     m_forwardStack.prepend(m_history.takeLast());
     browseCurrentLocation();
 }
@@ -349,7 +349,7 @@ void MainWindow::navigateUp()
 {
     if (m_atHome) return;
     const DlnaLocation &leaving = m_history.last();
-    m_pendingFocusId = (leaving.containerId == "0") ? leaving.serverName : leaving.containerId;
+    m_pendingFocusId = focusIdFor(leaving);
     if (m_history.size() <= 1) {
         navigateHome();
         return;
@@ -393,12 +393,21 @@ void MainWindow::onServerFound(const DlnaServer &server)
         item.type = DlnaItemType::Server;
         item.thumbnailUrl = server.iconUrl;
 
-        QList<DlnaItem> current;
-        for (int i = 0; i < m_model->rowCount(); ++i)
-            current.append(m_model->itemAt(i));
-        current.append(item);
-        m_model->setItems(current);
-        loadThumbnails(current);
+        m_model->appendItem(item);
+
+        if (!item.thumbnailUrl.isEmpty()) {
+            int row = m_model->rowCount() - 1;
+            QNetworkRequest req(item.thumbnailUrl);
+            req.setTransferTimeout(5000);
+            QNetworkReply *reply = m_thumbnailNam->get(req);
+            connect(reply, &QNetworkReply::finished, this, [this, reply, row]() {
+                reply->deleteLater();
+                if (reply->error() != QNetworkReply::NoError) return;
+                QPixmap px;
+                if (px.loadFromData(reply->readAll()))
+                    m_model->setThumbnail(row, px);
+            });
+        }
 
         m_statusLabel->setText(tr("Found: %1").arg(server.name));
     }
@@ -541,6 +550,11 @@ QString MainWindow::sortCriteriaString() const
     case SortMode::DateDesc: return "-dc:date";
     }
     return {};
+}
+
+QString MainWindow::focusIdFor(const DlnaLocation &loc) const
+{
+    return loc.containerId == "0" ? loc.serverName : loc.containerId;
 }
 
 void MainWindow::restoreFocus()

@@ -56,7 +56,7 @@ QPixmap FaIcon::pixmap(uint codePoint, QColor color, int size, double scale)
     return px;
 }
 
-QIcon FaIcon::icon(uint codePoint, QColor color, int /*size*/, double scale)
+QIcon FaIcon::icon(uint codePoint, QColor color, double scale)
 {
     QIcon ic;
     for (int s : {16, 20, 24, 32, 48, 64, 96, 128, 256})

@@ -17,6 +17,14 @@ void DlnaModel::setItems(const QList<DlnaItem> &items)
     endResetModel();
 }
 
+void DlnaModel::appendItem(const DlnaItem &item)
+{
+    int row = m_items.size();
+    beginInsertRows({}, row, row);
+    m_items.append(item);
+    endInsertRows();
+}
+
 void DlnaModel::clear()
 {
     beginResetModel();

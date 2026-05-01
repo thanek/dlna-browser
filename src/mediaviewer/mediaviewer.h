@@ -7,7 +7,6 @@ class QToolButton;
 class QLabel;
 class VideoWidget;
 class ImageWidget;
-class InfoWidget;
 class DlnaModel;
 
 class MediaViewer : public QMainWindow {
@@ -33,7 +32,6 @@ private:
     QStackedWidget *m_stack;
     VideoWidget    *m_video;
     ImageWidget    *m_image;
-    InfoWidget     *m_info;
 
     QToolButton *m_btnPrev;
     QToolButton *m_btnNext;

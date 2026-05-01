@@ -42,8 +42,6 @@ private:
     QRectF progressBarRect() const;
     QRectF playButtonRect() const;
     QRectF muteButtonRect() const;
-    static QString formatTime(qint64 ms);
-
     QString m_title;
     qint64 m_position = 0;
     qint64 m_duration = 0;

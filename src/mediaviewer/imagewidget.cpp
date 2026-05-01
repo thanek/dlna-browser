@@ -55,15 +55,19 @@ void ImageWidget::loadItem(const DlnaItem &item)
     setFocus();
 }
 
+void ImageWidget::updateMinZoom()
+{
+    if (m_pixmap.isNull() || width() == 0 || height() == 0) return;
+    double sx = double(width()) / m_pixmap.width();
+    double sy = double(height()) / m_pixmap.height();
+    m_minZoom = qMin(sx, sy);
+}
+
 void ImageWidget::setPixmap(const QPixmap &px)
 {
     m_pixmap = px;
-    if (!m_pixmap.isNull() && width() > 0 && height() > 0) {
-        double sx = double(width()) / m_pixmap.width();
-        double sy = double(height()) / m_pixmap.height();
-        m_minZoom = qMin(sx, sy);
-        m_zoom = m_minZoom;
-    }
+    updateMinZoom();
+    m_zoom = m_minZoom;
     m_offset = {};
     update();
 }
@@ -105,9 +109,7 @@ void ImageWidget::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
     if (!m_pixmap.isNull()) {
-        double sx = double(width()) / m_pixmap.width();
-        double sy = double(height()) / m_pixmap.height();
-        m_minZoom = qMin(sx, sy);
+        updateMinZoom();
         if (m_zoom < m_minZoom) m_zoom = m_minZoom;
         clampOffset();
     }

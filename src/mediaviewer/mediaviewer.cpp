@@ -1,7 +1,6 @@
 #include "mediaviewer/mediaviewer.h"
 #include "mediaviewer/videowidget.h"
 #include "mediaviewer/imagewidget.h"
-#include "mediaviewer/infowidget.h"
 #include "browser/dlnamodel.h"
 #include "dlna/dlnautils.h"
 #include "ui/faicon.h"
@@ -19,7 +18,6 @@ MediaViewer::MediaViewer(QWidget *parent)
     , m_stack(new QStackedWidget(this))
     , m_video(new VideoWidget(this))
     , m_image(new ImageWidget(this))
-    , m_info(new InfoWidget(this))
 {
     setWindowTitle(tr("Media Viewer"));
     resize(1280, 720);
@@ -27,19 +25,18 @@ MediaViewer::MediaViewer(QWidget *parent)
 
     m_stack->addWidget(m_video);
     m_stack->addWidget(m_image);
-    m_stack->addWidget(m_info);
 
     // Status bar
     m_infoLabel = new QLabel(this);
     statusBar()->addWidget(m_infoLabel, 1);
 
     m_btnPrev = new QToolButton(this);
-    m_btnPrev->setIcon(FaIcon::icon(Fa::ArrowLeft, Qt::white, 16));
+    m_btnPrev->setIcon(FaIcon::icon(Fa::ArrowLeft, Qt::white));
     m_btnPrev->setToolTip(tr("Previous file (Page Up)"));
     m_btnPrev->setAutoRaise(true);
 
     m_btnNext = new QToolButton(this);
-    m_btnNext->setIcon(FaIcon::icon(Fa::ArrowRight, Qt::white, 16));
+    m_btnNext->setIcon(FaIcon::icon(Fa::ArrowRight, Qt::white));
     m_btnNext->setToolTip(tr("Next file (Page Down)"));
     m_btnNext->setAutoRaise(true);
 
@@ -50,12 +47,10 @@ MediaViewer::MediaViewer(QWidget *parent)
     auto closeSlot = [this]() { close(); };
     connect(m_video, &VideoWidget::closeRequested, this, closeSlot);
     connect(m_image, &ImageWidget::closeRequested, this, closeSlot);
-    connect(m_info,  &InfoWidget::closeRequested,  this, closeSlot);
 
     // Keyboard navigation (PageUp/PageDown) — wired from all media widgets
     for (MediaWidget *w : {static_cast<MediaWidget*>(m_video),
-                           static_cast<MediaWidget*>(m_image),
-                           static_cast<MediaWidget*>(m_info)}) {
+                           static_cast<MediaWidget*>(m_image)}) {
         connect(w, &MediaWidget::navigatePrev, this, &MediaViewer::navigatePrev);
         connect(w, &MediaWidget::navigateNext, this, &MediaViewer::navigateNext);
     }
@@ -97,9 +92,7 @@ void MediaViewer::openRow(int row)
         m_stack->setCurrentWidget(m_image);
         break;
     default:
-        m_info->showItem(item);
-        m_stack->setCurrentWidget(m_info);
-        break;
+        return;
     }
 
     updateNavButtons();

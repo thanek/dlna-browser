@@ -57,6 +57,7 @@ private:
     QString sortCriteriaString() const;
     void applySortMode(SortMode mode);
     SortMode effectiveSortMode() const;
+    QString focusIdFor(const DlnaLocation &loc) const;
 
     // UI
     QToolBar *m_toolBar = nullptr;

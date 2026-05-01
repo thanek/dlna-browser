@@ -27,6 +27,7 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
+    void setupView(QListView *view);
     void setupListView();
     void setupIconView();
 

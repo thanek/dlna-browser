@@ -37,17 +37,21 @@ ContentView::ContentView(QWidget *parent)
     m_iconView->setStyleSheet(itemStyle);
 }
 
+void ContentView::setupView(QListView *view)
+{
+    view->setUniformItemSizes(true);
+    view->setSelectionMode(QAbstractItemView::SingleSelection);
+    view->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    connect(view, &QListView::activated, this, [this](const QModelIndex &idx) {
+        emit itemActivated(idx.row());
+    });
+}
+
 void ContentView::setupListView()
 {
     m_listView->setViewMode(QListView::ListMode);
     m_listView->setIconSize(QSize(24, 24));
-    m_listView->setUniformItemSizes(true);
-    m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-    connect(m_listView, &QListView::activated, this, [this](const QModelIndex &idx) {
-        emit itemActivated(idx.row());
-    });
+    setupView(m_listView);
 }
 
 void ContentView::setupIconView()
@@ -56,14 +60,8 @@ void ContentView::setupIconView()
     m_iconView->setIconSize(QSize(64, 64));
     m_iconView->setGridSize(QSize(96, 128));
     m_iconView->setResizeMode(QListView::Adjust);
-    m_iconView->setUniformItemSizes(true);
-    m_iconView->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_iconView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_iconView->setWordWrap(true);
-
-    connect(m_iconView, &QListView::activated, this, [this](const QModelIndex &idx) {
-        emit itemActivated(idx.row());
-    });
+    setupView(m_iconView);
 }
 
 void ContentView::setModel(DlnaModel *model)

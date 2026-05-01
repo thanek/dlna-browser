@@ -102,11 +102,6 @@ QRectF ControlOverlay::muteButtonRect() const
     return QRectF(cb.right() - 40, cb.top() + 28, 28, 28);
 }
 
-QString ControlOverlay::formatTime(qint64 ms)
-{
-    return DlnaUtils::formatTime(ms);
-}
-
 // ─── Painting ────────────────────────────────────────────────────────────────
 
 void ControlOverlay::paintPlayIcon(QPainter &p, QRectF r, bool playing)
@@ -178,9 +173,9 @@ void ControlOverlay::paintControlBar(QPainter &p)
     }
 
     // Time text
-    QString timeStr = formatTime(m_position);
+    QString timeStr = DlnaUtils::formatTime(m_position);
     if (m_duration > 0)
-        timeStr += " / " + formatTime(m_duration);
+        timeStr += " / " + DlnaUtils::formatTime(m_duration);
     QFont f = font();
     f.setPointSize(11);
     p.setFont(f);

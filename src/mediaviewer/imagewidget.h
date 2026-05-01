@@ -21,6 +21,7 @@ protected:
 
 private:
     void setPixmap(const QPixmap &px);
+    void updateMinZoom();
     void clampOffset();
     void zoom(double factor, QPointF center = {-1, -1});
     QRectF imageRect() const;

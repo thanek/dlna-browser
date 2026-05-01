@@ -47,8 +47,6 @@ set(SOURCES
     src/mediaviewer/videowidget.cpp
     src/mediaviewer/imagewidget.h
     src/mediaviewer/imagewidget.cpp
-    src/mediaviewer/infowidget.h
-    src/mediaviewer/infowidget.cpp
     src/mediaviewer/mediaviewer.h
     src/mediaviewer/mediaviewer.cpp
     resources/resources.qrc

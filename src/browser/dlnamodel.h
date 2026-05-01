@@ -24,6 +24,7 @@ public:
     explicit DlnaModel(QObject *parent = nullptr);
 
     void setItems(const QList<DlnaItem> &items);
+    void appendItem(const DlnaItem &item);
     void clear();
 
     DlnaItem itemAt(int row) const;
