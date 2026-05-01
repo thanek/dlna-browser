@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <QtGlobal>
 
 enum class DlnaItemType {
     Server,
@@ -20,6 +21,7 @@ struct DlnaItem {
     QUrl resourceUrl;
     QUrl thumbnailUrl;
     QString date;
+    qint64 fileSize = 0;
 
     bool isContainer() const {
         return type == DlnaItemType::Server || type == DlnaItemType::Container;

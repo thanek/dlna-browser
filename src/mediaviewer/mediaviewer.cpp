@@ -79,7 +79,15 @@ void MediaViewer::openRow(int row)
 
     DlnaItem item = m_model->itemAt(row);
     setWindowTitle(item.title.isEmpty() ? tr("Media Viewer") : item.title);
-    m_infoLabel->setText(item.mimeType.isEmpty() ? QString() : item.mimeType);
+    QStringList parts;
+    if (!item.mimeType.isEmpty()) parts << item.mimeType;
+    if (item.fileSize > 0) {
+        double mb = item.fileSize / 1048576.0;
+        parts << (mb >= 1.0 ? QString::number(mb, 'f', 1) + " MB"
+                            : QString::number(item.fileSize / 1024.0, 'f', 1) + " KB");
+    }
+    if (!item.date.isEmpty()) parts << item.date;
+    m_infoLabel->setText(parts.join("  ·  "));
 
     switch (item.type) {
     case DlnaItemType::Video:

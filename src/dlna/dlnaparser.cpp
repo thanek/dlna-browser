@@ -65,6 +65,9 @@ QList<DlnaItem> parseDidl(const QString &didlXml)
                 item.resourceUrl = QUrl(res.text());
                 item.mimeType    = mime;
                 item.type        = DlnaItem::typeFromMime(mime);
+                QString sizeStr  = res.attribute("size");
+                if (!sizeStr.isEmpty())
+                    item.fileSize = sizeStr.toLongLong();
             }
         }
         items.append(item);
