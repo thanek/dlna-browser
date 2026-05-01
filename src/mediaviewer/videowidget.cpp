@@ -351,13 +351,14 @@ void VideoWidget::loadItem(const DlnaItem &item)
     if (m_audioMode && !item.thumbnailUrl.isEmpty())
         fetchAlbumArt(item.thumbnailUrl);
 
+    m_pendingPlay = true;
     m_player->setSource(item.resourceUrl);
-    m_player->play();
     setFocus();
 }
 
 void VideoWidget::stop()
 {
+    m_pendingPlay = false;
     m_player->stop();
     m_player->setSource({});
 }
@@ -453,7 +454,11 @@ void VideoWidget::keyPressEvent(QKeyEvent *e)
 
 void VideoWidget::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
-    if (status == QMediaPlayer::EndOfMedia) {
+    if (m_pendingPlay &&
+        (status == QMediaPlayer::LoadedMedia || status == QMediaPlayer::BufferedMedia)) {
+        m_pendingPlay = false;
+        m_player->play();
+    } else if (status == QMediaPlayer::EndOfMedia) {
         m_player->pause();
         m_overlay->setPlaying(false);
         m_overlay->showControls();

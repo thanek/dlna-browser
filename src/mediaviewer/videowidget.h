@@ -83,4 +83,5 @@ private:
     ControlOverlay *m_overlay;
     QNetworkAccessManager *m_nam;
     bool m_audioMode = false;
+    bool m_pendingPlay = false;
 };
