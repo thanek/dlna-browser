@@ -15,6 +15,8 @@
 #include <QPainterPath>
 #include <QApplication>
 #include <QMouseEvent>
+#include <QWheelEvent>
+#include <QNativeGestureEvent>
 
 // ─── NavButtonsOverlay ───────────────────────────────────────────────────────
 
@@ -85,24 +87,77 @@ void NavButtonsOverlay::paintEvent(QPaintEvent *)
     drawButton(nextButtonRect(), Fa::ArrowRight, m_nextEnabled);
 }
 
-void NavButtonsOverlay::forwardToUnderlying(QMouseEvent *e)
+void NavButtonsOverlay::forwardToUnderlying(QEvent *e, QPointF globalPos)
 {
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    QWidget *w = QApplication::widgetAt(e->globalPosition().toPoint());
+    QWidget *w = QApplication::widgetAt(globalPos.toPoint());
     if (w && w != this) {
-        QMouseEvent ev(e->type(),
-                       w->mapFromGlobal(e->globalPosition()),
-                       e->globalPosition(),
-                       e->button(), e->buttons(), e->modifiers());
-        QApplication::sendEvent(w, &ev);
+        e->ignore();
+        QApplication::sendEvent(w, e);
     }
     setAttribute(Qt::WA_TransparentForMouseEvents, false);
+}
+
+bool NavButtonsOverlay::event(QEvent *e)
+{
+    if (e->type() == QEvent::NativeGesture) {
+        auto *ge = static_cast<QNativeGestureEvent *>(e);
+        if (ge->gestureType() == Qt::SwipeNativeGesture) {
+            if (ge->value() > 0)
+                emit prevClicked();
+            else if (ge->value() < 0)
+                emit nextClicked();
+            return true;
+        }
+        forwardToUnderlying(e, ge->globalPosition());
+        return true;
+    }
+    return QWidget::event(e);
+}
+
+void NavButtonsOverlay::wheelEvent(QWheelEvent *e)
+{
+    const QPoint pd = e->pixelDelta();
+
+    // Phase handling must be outside the pixelDelta guard — ScrollEnd arrives with pd==(0,0) on macOS
+    switch (e->phase()) {
+    case Qt::ScrollBegin:
+        m_swipeAccumX = 0;
+        m_swipeAccumY = 0;
+        m_swipeNavigated = false;
+        break;
+    case Qt::ScrollUpdate:
+        if (!pd.isNull()) {
+            m_swipeAccumX += pd.x();
+            m_swipeAccumY += pd.y();
+        }
+        break;
+    case Qt::ScrollEnd: {
+        const qreal absX = qAbs(m_swipeAccumX);
+        const qreal absY = qAbs(m_swipeAccumY);
+        if (!m_swipeNavigated && absX >= 5 && absX >= absY) {
+            m_swipeNavigated = true;
+            if (m_swipeAccumX > 0)
+                emit prevClicked();
+            else
+                emit nextClicked();
+            return;
+        }
+        break;
+    }
+    case Qt::ScrollMomentum:
+        if (m_swipeNavigated) return;
+        break;
+    default:
+        break;
+    }
+    forwardToUnderlying(e, e->globalPosition());
 }
 
 void NavButtonsOverlay::mouseMoveEvent(QMouseEvent *e)
 {
     showButtons();
-    forwardToUnderlying(e);
+    forwardToUnderlying(e, e->globalPosition());
 }
 
 void NavButtonsOverlay::mousePressEvent(QMouseEvent *e)
@@ -117,12 +172,12 @@ void NavButtonsOverlay::mousePressEvent(QMouseEvent *e)
             return;
         }
     }
-    forwardToUnderlying(e);
+    forwardToUnderlying(e, e->globalPosition());
 }
 
 void NavButtonsOverlay::mouseReleaseEvent(QMouseEvent *e)
 {
-    forwardToUnderlying(e);
+    forwardToUnderlying(e, e->globalPosition());
 }
 
 // ─── MediaViewer ─────────────────────────────────────────────────────────────
@@ -216,6 +271,7 @@ void MediaViewer::openRow(int row)
 
     m_navOverlay->raise();
     updateNavButtons();
+    m_navOverlay->showButtons();
 }
 
 void MediaViewer::closeEvent(QCloseEvent *e)

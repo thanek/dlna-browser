@@ -70,6 +70,7 @@ protected:
 private:
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
     void onPlayWatchdog();
+    void installOverlayFilter(QObject *filter) { m_overlay->installEventFilter(filter); }
     void fetchAlbumArt(const QUrl &url);
     void paintEvent(QPaintEvent *) override;
     static QRectF letterboxRect(QSize content, QSize view);

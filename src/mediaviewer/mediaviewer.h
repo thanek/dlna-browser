@@ -23,20 +23,25 @@ signals:
     void nextClicked();
 
 protected:
+    bool event(QEvent *e) override;
     void paintEvent(QPaintEvent *) override;
+    void wheelEvent(QWheelEvent *e) override;
     void mouseMoveEvent(QMouseEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
     void mouseReleaseEvent(QMouseEvent *) override;
 
 private:
-    void forwardToUnderlying(QMouseEvent *e);
+    void forwardToUnderlying(QEvent *e, QPointF globalPos);
     QRectF prevButtonRect() const;
     QRectF nextButtonRect() const;
 
     QTimer *m_hideTimer;
-    bool m_visible    = false;
-    bool m_prevEnabled = false;
-    bool m_nextEnabled = false;
+    bool   m_visible       = false;
+    bool   m_prevEnabled   = false;
+    bool   m_nextEnabled   = false;
+    qreal  m_swipeAccumX   = 0;
+    qreal  m_swipeAccumY   = 0;
+    bool   m_swipeNavigated = false;
 };
 
 class MediaViewer : public QMainWindow {

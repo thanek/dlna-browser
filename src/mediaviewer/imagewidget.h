@@ -11,6 +11,7 @@ public:
     void loadItem(const DlnaItem &item);
 
 protected:
+    bool event(QEvent *e) override;
     void paintEvent(QPaintEvent *) override;
     void keyPressEvent(QKeyEvent *) override;
     void wheelEvent(QWheelEvent *) override;

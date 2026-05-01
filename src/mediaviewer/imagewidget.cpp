@@ -2,6 +2,7 @@
 
 #include <QPainter>
 #include <QWheelEvent>
+#include <QNativeGestureEvent>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QImageReader>
@@ -162,10 +163,38 @@ void ImageWidget::keyPressEvent(QKeyEvent *e)
     }
 }
 
+bool ImageWidget::event(QEvent *e)
+{
+    if (e->type() == QEvent::NativeGesture) {
+        auto *ge = static_cast<QNativeGestureEvent *>(e);
+        switch (ge->gestureType()) {
+        case Qt::ZoomNativeGesture:
+            zoom(1.0 + ge->value(), ge->position());
+            return true;
+        case Qt::SmartZoomNativeGesture:
+            m_zoom = m_minZoom;
+            m_offset = {};
+            update();
+            return true;
+        default:
+            break;
+        }
+    }
+    return QWidget::event(e);
+}
+
 void ImageWidget::wheelEvent(QWheelEvent *e)
 {
-    double factor = e->angleDelta().y() > 0 ? ZoomStep : 1.0 / ZoomStep;
-    zoom(factor, e->position());
+    if (!e->pixelDelta().isNull()) {
+        // Trackpad two-finger scroll → pan
+        m_offset += QPointF(e->pixelDelta());
+        clampOffset();
+        update();
+    } else {
+        // Mouse wheel → zoom
+        double factor = e->angleDelta().y() > 0 ? ZoomStep : 1.0 / ZoomStep;
+        zoom(factor, e->position());
+    }
 }
 
 void ImageWidget::mousePressEvent(QMouseEvent *e)
