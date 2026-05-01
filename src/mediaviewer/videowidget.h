@@ -69,6 +69,7 @@ protected:
 
 private:
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
+    void onPlayWatchdog();
     void fetchAlbumArt(const QUrl &url);
     void paintEvent(QPaintEvent *) override;
     static QRectF letterboxRect(QSize content, QSize view);
@@ -79,6 +80,9 @@ private:
     QVideoFrame m_currentFrame;
     ControlOverlay *m_overlay;
     QNetworkAccessManager *m_nam;
+    QTimer *m_playWatchdog;
+    QUrl m_currentSource;
     bool m_audioMode = false;
     bool m_pendingPlay = false;
+    int m_playRetries = 0;
 };

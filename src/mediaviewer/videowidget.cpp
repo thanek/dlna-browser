@@ -250,7 +250,11 @@ VideoWidget::VideoWidget(QWidget *parent)
     , m_videoSink(new QVideoSink(this))
     , m_overlay(new ControlOverlay(this))
     , m_nam(new QNetworkAccessManager(this))
+    , m_playWatchdog(new QTimer(this))
 {
+    m_playWatchdog->setSingleShot(true);
+    m_playWatchdog->setInterval(2000);
+    connect(m_playWatchdog, &QTimer::timeout, this, &VideoWidget::onPlayWatchdog);
     setMouseTracking(true);
 
     // QVideoSink receives frames — we draw them ourselves in paintEvent,
@@ -282,6 +286,7 @@ VideoWidget::VideoWidget(QWidget *parent)
     });
 
     connect(m_player, &QMediaPlayer::positionChanged, this, [this](qint64 pos) {
+        if (pos > 0) m_playWatchdog->stop();
         m_overlay->setPosition(pos, m_player->duration());
     });
     connect(m_player, &QMediaPlayer::durationChanged, this, [this](qint64 dur) {
@@ -308,6 +313,8 @@ void VideoWidget::loadItem(const DlnaItem &item)
     if (m_audioMode && !item.thumbnailUrl.isEmpty())
         fetchAlbumArt(item.thumbnailUrl);
 
+    m_currentSource = item.resourceUrl;
+    m_playRetries = 0;
     m_pendingPlay = true;
     m_player->setSource(item.resourceUrl);
     setFocus();
@@ -316,6 +323,9 @@ void VideoWidget::loadItem(const DlnaItem &item)
 void VideoWidget::stop()
 {
     m_pendingPlay = false;
+    m_playRetries = 0;
+    m_playWatchdog->stop();
+    m_currentSource.clear();
     m_player->stop();
     m_player->setSource({});
 }
@@ -415,11 +425,25 @@ void VideoWidget::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
         (status == QMediaPlayer::LoadedMedia || status == QMediaPlayer::BufferedMedia)) {
         m_pendingPlay = false;
         m_player->play();
+        m_playWatchdog->start();
     } else if (status == QMediaPlayer::EndOfMedia) {
         m_player->pause();
         m_overlay->setPlaying(false);
         m_overlay->showControls();
     }
+}
+
+void VideoWidget::onPlayWatchdog()
+{
+    // macOS/AVFoundation sometimes enters PlayingState but stalls at position 0;
+    // reload the source to reset the audio pipeline (max 2 retries).
+    if (m_player->playbackState() != QMediaPlayer::PlayingState) return;
+    if (m_player->position() != 0) return;
+    if (m_currentSource.isEmpty() || ++m_playRetries > 2) return;
+
+    m_pendingPlay = true;
+    m_player->stop();
+    m_player->setSource(m_currentSource);
 }
 
 void VideoWidget::fetchAlbumArt(const QUrl &url)
