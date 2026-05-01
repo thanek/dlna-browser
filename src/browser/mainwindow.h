@@ -94,5 +94,6 @@ private:
     ViewMode m_viewMode = ViewMode::List;
 
     int m_thumbnailGeneration = 0;
+    int m_autoScanRetries = 0;
     QString m_pendingFocusId;
 };

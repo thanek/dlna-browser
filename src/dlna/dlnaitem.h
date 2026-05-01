@@ -16,6 +16,8 @@ enum class DlnaItemType {
 struct DlnaItem {
     QString id;
     QString title;
+    QString artist;
+    QString album;
     DlnaItemType type = DlnaItemType::Unknown;
     QString mimeType;
     QUrl resourceUrl;

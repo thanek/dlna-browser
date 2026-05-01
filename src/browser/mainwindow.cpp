@@ -70,7 +70,8 @@ MainWindow::MainWindow(QWidget *parent)
         m_contentView->setViewMode(ViewMode::Icons);
     }
 
-    // Show home (server list) on startup
+    // Show home (server list) on startup; allow up to 2 automatic retries on timeout
+    m_autoScanRetries = 2;
     navigateHome();
 }
 
@@ -169,13 +170,16 @@ void MainWindow::setupToolBar()
     connect(m_actBack,    &QAction::triggered, this, &MainWindow::navigateBack);
     connect(m_actForward, &QAction::triggered, this, &MainWindow::navigateForward);
     connect(m_actUp,      &QAction::triggered, this, &MainWindow::navigateUp);
-    connect(m_actHome,    &QAction::triggered, this, &MainWindow::navigateHome);
+    connect(m_actHome,    &QAction::triggered, this, [this]() {
+        m_autoScanRetries = 0;
+        navigateHome();
+    });
     connect(m_actAddFav,  &QAction::triggered, this, &MainWindow::addCurrentToFavorites);
     connect(m_btnView,    &QToolButton::clicked, this, &MainWindow::onViewToggled);
     connect(sortGroup, &QActionGroup::triggered, this, &MainWindow::onSortChanged);
 
     connect(m_addressBar, &AddressBar::navigateTo, this, [this](const QList<DlnaLocation> &path) {
-        if (path.isEmpty()) { navigateHome(); return; }
+        if (path.isEmpty()) { m_autoScanRetries = 0; navigateHome(); return; }
         m_forwardStack.clear();
         m_history = path;
         m_atHome = false;
@@ -328,6 +332,7 @@ void MainWindow::navigateBack()
             m_forwardStack.prepend(m_history.takeLast());
         }
         m_atHome = true;
+        m_autoScanRetries = 0;
         navigateHome();
         return;
     }
@@ -351,6 +356,7 @@ void MainWindow::navigateUp()
     const DlnaLocation &leaving = m_history.last();
     m_pendingFocusId = focusIdFor(leaving);
     if (m_history.size() <= 1) {
+        m_autoScanRetries = 0;
         navigateHome();
         return;
     }
@@ -415,12 +421,17 @@ void MainWindow::onServerFound(const DlnaServer &server)
 
 void MainWindow::onDiscoveryFinished()
 {
-    if (m_atHome) {
-        int n = m_model->rowCount();
-        m_statusLabel->setText(n == 0
-            ? tr("No DLNA servers found on the network")
-            : tr("%1 DLNA server(s) found").arg(n));
+    if (!m_atHome) return;
+    int n = m_model->rowCount();
+    if (n == 0 && m_autoScanRetries > 0) {
+        --m_autoScanRetries;
+        m_statusLabel->setText(tr("Scanning for DLNA servers…"));
+        m_discovery->startDiscovery();
+        return;
     }
+    m_statusLabel->setText(n == 0
+        ? tr("No DLNA servers found on the network")
+        : tr("%1 DLNA server(s) found").arg(n));
 }
 
 void MainWindow::onControlUrlReady(const QString &serverName, const QString &controlUrl)

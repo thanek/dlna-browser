@@ -304,7 +304,10 @@ void VideoWidget::loadItem(const DlnaItem &item)
     m_audioMode = (item.type == DlnaItemType::Audio);
     m_currentFrame = {};
     m_overlay->setAudioMode(m_audioMode);
-    m_overlay->setTitle(item.title);
+    QString displayTitle = item.title;
+    if (m_audioMode && !item.artist.isEmpty())
+        displayTitle = item.artist + " — " + item.title;
+    m_overlay->setTitle(displayTitle);
     m_overlay->setPosition(0, 0);
     m_overlay->setPlaying(false);
     m_overlay->setMuted(m_audioOutput->isMuted());

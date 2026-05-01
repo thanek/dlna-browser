@@ -22,6 +22,18 @@ static void parseCommonFields(QDomElement &el, DlnaItem &item)
     if (!arts.isEmpty())
         item.thumbnailUrl = QUrl(arts.at(0).toElement().text());
 
+    auto artists = el.elementsByTagName("upnp:artist");
+    if (!artists.isEmpty())
+        item.artist = artists.at(0).toElement().text();
+    if (item.artist.isEmpty()) {
+        auto creators = el.elementsByTagName("dc:creator");
+        if (!creators.isEmpty()) item.artist = creators.at(0).toElement().text();
+    }
+
+    auto albums = el.elementsByTagName("upnp:album");
+    if (!albums.isEmpty())
+        item.album = albums.at(0).toElement().text();
+
     auto dates = el.elementsByTagName("dc:date");
     if (!dates.isEmpty())
         item.date = dates.at(0).toElement().text();
