@@ -349,6 +349,100 @@ void TestDlnaParser::formatTime_hours()
     QCOMPARE(DlnaUtils::formatTime(7322000), "2:02:02");
 }
 
+void TestDlnaParser::formatTime_justBeforeHour()
+{
+    QCOMPARE(DlnaUtils::formatTime(3599999), "59:59");
+}
+
+// ─── displayTitle ────────────────────────────────────────────────────────────
+
+void TestDlnaParser::displayTitle_audioWithArtist()
+{
+    DlnaItem it;
+    it.type   = DlnaItemType::Audio;
+    it.title  = "Song";
+    it.artist = "Artist";
+    QCOMPARE(it.displayTitle(), "Artist — Song");
+}
+
+void TestDlnaParser::displayTitle_audioWithoutArtist()
+{
+    DlnaItem it;
+    it.type  = DlnaItemType::Audio;
+    it.title = "Song";
+    QCOMPARE(it.displayTitle(), "Song");
+}
+
+void TestDlnaParser::displayTitle_videoIgnoresArtist()
+{
+    DlnaItem it;
+    it.type   = DlnaItemType::Video;
+    it.title  = "Movie";
+    it.artist = "Director";
+    QCOMPARE(it.displayTitle(), "Movie");
+}
+
+void TestDlnaParser::displayTitle_emptyTitle()
+{
+    DlnaItem it;
+    it.type   = DlnaItemType::Audio;
+    it.artist = "Artist";
+    QCOMPARE(it.displayTitle(), "Artist — ");
+}
+
+// ─── DIDL audio metadata ─────────────────────────────────────────────────────
+
+static const char *DidlAudioWithMeta = R"(<?xml version="1.0"?>
+<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"
+           xmlns:dc="http://purl.org/dc/elements/1.1/"
+           xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">
+  <item id="7" parentID="0" restricted="1">
+    <dc:title>Great Song</dc:title>
+    <upnp:artist>The Band</upnp:artist>
+    <upnp:album>Best Of</upnp:album>
+    <res protocolInfo="http-get:*:audio/mpeg:*" size="5242880">http://server/song.mp3</res>
+  </item>
+</DIDL-Lite>)";
+
+static const char *DidlAudioCreator = R"(<?xml version="1.0"?>
+<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"
+           xmlns:dc="http://purl.org/dc/elements/1.1/"
+           xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">
+  <item id="8" parentID="0" restricted="1">
+    <dc:title>Other Song</dc:title>
+    <dc:creator>Solo Artist</dc:creator>
+    <res protocolInfo="http-get:*:audio/flac:*">http://server/other.flac</res>
+  </item>
+</DIDL-Lite>)";
+
+void TestDlnaParser::parseDidl_artistMetadata()
+{
+    auto items = DlnaParser::parseDidl(QString::fromUtf8(DidlAudioWithMeta));
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items[0].artist, "The Band");
+}
+
+void TestDlnaParser::parseDidl_albumMetadata()
+{
+    auto items = DlnaParser::parseDidl(QString::fromUtf8(DidlAudioWithMeta));
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items[0].album, "Best Of");
+}
+
+void TestDlnaParser::parseDidl_creatorFallback()
+{
+    auto items = DlnaParser::parseDidl(QString::fromUtf8(DidlAudioCreator));
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items[0].artist, "Solo Artist");
+}
+
+void TestDlnaParser::parseDidl_fileSize()
+{
+    auto items = DlnaParser::parseDidl(QString::fromUtf8(DidlAudioWithMeta));
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items[0].fileSize, 5242880LL);
+}
+
 // ─── findPrevFile / findNextFile ──────────────────────────────────────────────
 
 static QList<DlnaItem> makeItemList()

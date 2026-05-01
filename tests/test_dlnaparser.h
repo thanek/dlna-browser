@@ -50,6 +50,17 @@ private slots:
     void formatTime_seconds();
     void formatTime_minutes();
     void formatTime_hours();
+    void formatTime_justBeforeHour();
+
+    void displayTitle_audioWithArtist();
+    void displayTitle_audioWithoutArtist();
+    void displayTitle_videoIgnoresArtist();
+    void displayTitle_emptyTitle();
+
+    void parseDidl_artistMetadata();
+    void parseDidl_albumMetadata();
+    void parseDidl_creatorFallback();
+    void parseDidl_fileSize();
 
     void findNextFile_fromStart();
     void findNextFile_skipsContainer();

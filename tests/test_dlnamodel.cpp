@@ -131,4 +131,24 @@ void TestDlnaModel::setThumbnail_outOfRange()
     QVERIFY(!m.data(m.index(0), DlnaModel::ThumbnailRole).isValid());
 }
 
+// ─── appendItem ──────────────────────────────────────────────────────────────
+
+void TestDlnaModel::appendItem_toEmpty()
+{
+    DlnaModel m;
+    m.appendItem(makeItem("1", "A", DlnaItemType::Video));
+    QCOMPARE(m.rowCount(), 1);
+    QCOMPARE(m.itemAt(0).id, "1");
+}
+
+void TestDlnaModel::appendItem_toExisting()
+{
+    DlnaModel m;
+    m.setItems({makeItem("1", "A", DlnaItemType::Video)});
+    m.appendItem(makeItem("2", "B", DlnaItemType::Audio));
+    QCOMPARE(m.rowCount(), 2);
+    QCOMPARE(m.itemAt(1).id, "2");
+    QCOMPARE(m.itemAt(0).id, "1");
+}
+
 QTEST_GUILESS_MAIN(TestDlnaModel)

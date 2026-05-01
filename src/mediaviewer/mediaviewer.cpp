@@ -21,18 +21,8 @@
 // ─── NavButtonsOverlay ───────────────────────────────────────────────────────
 
 NavButtonsOverlay::NavButtonsOverlay(QWidget *parent)
-    : QWidget(parent)
-    , m_hideTimer(new QTimer(this))
+    : AutoHideOverlay(parent)
 {
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_NoSystemBackground);
-    setMouseTracking(true);
-    m_hideTimer->setSingleShot(true);
-    m_hideTimer->setInterval(3000);
-    connect(m_hideTimer, &QTimer::timeout, this, [this]() {
-        m_visible = false;
-        update();
-    });
 }
 
 void NavButtonsOverlay::setPrevEnabled(bool enabled)
@@ -49,26 +39,22 @@ void NavButtonsOverlay::setNextEnabled(bool enabled)
 
 void NavButtonsOverlay::showButtons()
 {
-    m_visible = true;
-    m_hideTimer->start();
-    update();
+    showOverlay();
 }
 
 QRectF NavButtonsOverlay::prevButtonRect() const
 {
-    const int sz = 52;
-    return QRectF(16, (height() - sz) / 2.0, sz, sz);
+    return QRectF(16, (height() - NavButtonSize) / 2.0, NavButtonSize, NavButtonSize);
 }
 
 QRectF NavButtonsOverlay::nextButtonRect() const
 {
-    const int sz = 52;
-    return QRectF(width() - sz - 16, (height() - sz) / 2.0, sz, sz);
+    return QRectF(width() - NavButtonSize - 16, (height() - NavButtonSize) / 2.0, NavButtonSize, NavButtonSize);
 }
 
 void NavButtonsOverlay::paintEvent(QPaintEvent *)
 {
-    if (!m_visible) return;
+    if (!m_overlayVisible) return;
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
@@ -239,10 +225,6 @@ void MediaViewer::openRow(int row)
 
     DlnaItem item = m_model->itemAt(row);
     setWindowTitle(item.title.isEmpty() ? tr("Media Viewer") : item.title);
-
-    QString displayTitle = item.title;
-    if (item.type == DlnaItemType::Audio && !item.artist.isEmpty())
-        displayTitle = item.artist + " — " + item.title;
 
     QStringList parts;
     if (!item.resourceUrl.isEmpty()) parts << item.resourceUrl.toString();

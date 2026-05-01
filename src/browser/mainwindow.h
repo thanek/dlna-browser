@@ -37,7 +37,7 @@ private slots:
     void navigateBack();
     void navigateForward();
     void navigateUp();
-    void navigateHome();
+    void navigateHome(bool isAutoStart = false);
     void onSortChanged(QAction *action);
     void onViewToggled();
     void addCurrentToFavorites();
@@ -95,5 +95,7 @@ private:
 
     int m_thumbnailGeneration = 0;
     int m_autoScanRetries = 0;
+
+    static constexpr int AutoScanMaxRetries = 2;
     QString m_pendingFocusId;
 };

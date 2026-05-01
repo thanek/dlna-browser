@@ -1,7 +1,7 @@
 #pragma once
 #include <QMainWindow>
-#include <QTimer>
 #include "dlna/dlnaitem.h"
+#include "mediaviewer/autohideoverlay.h"
 
 class QStackedWidget;
 class QLabel;
@@ -10,7 +10,7 @@ class VideoWidget;
 class ImageWidget;
 class DlnaModel;
 
-class NavButtonsOverlay : public QWidget {
+class NavButtonsOverlay : public AutoHideOverlay {
     Q_OBJECT
 public:
     explicit NavButtonsOverlay(QWidget *parent = nullptr);
@@ -35,13 +35,13 @@ private:
     QRectF prevButtonRect() const;
     QRectF nextButtonRect() const;
 
-    QTimer *m_hideTimer;
-    bool   m_visible       = false;
-    bool   m_prevEnabled   = false;
-    bool   m_nextEnabled   = false;
-    qreal  m_swipeAccumX   = 0;
-    qreal  m_swipeAccumY   = 0;
+    bool   m_prevEnabled    = false;
+    bool   m_nextEnabled    = false;
+    qreal  m_swipeAccumX    = 0;
+    qreal  m_swipeAccumY    = 0;
     bool   m_swipeNavigated = false;
+
+    static constexpr int NavButtonSize = 52;
 };
 
 class MediaViewer : public QMainWindow {

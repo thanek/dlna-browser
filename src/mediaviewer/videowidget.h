@@ -7,9 +7,10 @@
 #include <QPixmap>
 #include <QNetworkAccessManager>
 #include "dlna/dlnaitem.h"
+#include "mediaviewer/autohideoverlay.h"
 #include "mediaviewer/mediawidget.h"
 
-class ControlOverlay : public QWidget {
+class ControlOverlay : public AutoHideOverlay {
     Q_OBJECT
 public:
     explicit ControlOverlay(QWidget *parent = nullptr);
@@ -42,16 +43,16 @@ private:
     QRectF progressBarRect() const;
     QRectF playButtonRect() const;
     QRectF muteButtonRect() const;
+
     QString m_title;
     qint64 m_position = 0;
     qint64 m_duration = 0;
     bool m_playing = false;
     bool m_muted = false;
-    bool m_controlsVisible = true;
     bool m_audioMode = false;
     QPixmap m_albumArt;
-    QTimer *m_hideTimer;
 
+    static constexpr int ControlBarMaxWidth = 600;
     static constexpr QColor AccentColor{0x88, 0xc0, 0xd0};
 };
 
@@ -70,7 +71,7 @@ protected:
 private:
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
     void onPlayWatchdog();
-    void installOverlayFilter(QObject *filter) { m_overlay->installEventFilter(filter); }
+    void togglePlayPause();
     void fetchAlbumArt(const QUrl &url);
     void paintEvent(QPaintEvent *) override;
     static QRectF letterboxRect(QSize content, QSize view);
@@ -86,4 +87,6 @@ private:
     bool m_audioMode = false;
     bool m_pendingPlay = false;
     int m_playRetries = 0;
+
+    static constexpr int WatchdogMs = 2000;
 };

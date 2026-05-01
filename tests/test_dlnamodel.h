@@ -22,4 +22,7 @@ private slots:
 
     void items_getter();
     void setThumbnail_outOfRange();
+
+    void appendItem_toEmpty();
+    void appendItem_toExisting();
 };

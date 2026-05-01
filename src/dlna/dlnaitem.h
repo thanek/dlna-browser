@@ -29,6 +29,12 @@ struct DlnaItem {
         return type == DlnaItemType::Server || type == DlnaItemType::Container;
     }
 
+    QString displayTitle() const {
+        if (type == DlnaItemType::Audio && !artist.isEmpty())
+            return artist + " — " + title;
+        return title;
+    }
+
     static DlnaItemType typeFromMime(const QString &mime) {
         if (mime.startsWith("video/"))  return DlnaItemType::Video;
         if (mime.startsWith("audio/"))  return DlnaItemType::Audio;

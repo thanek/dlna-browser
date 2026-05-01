@@ -70,9 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
         m_contentView->setViewMode(ViewMode::Icons);
     }
 
-    // Show home (server list) on startup; allow up to 2 automatic retries on timeout
-    m_autoScanRetries = 2;
-    navigateHome();
+    navigateHome(true);
 }
 
 MainWindow::~MainWindow() = default;
@@ -170,16 +168,13 @@ void MainWindow::setupToolBar()
     connect(m_actBack,    &QAction::triggered, this, &MainWindow::navigateBack);
     connect(m_actForward, &QAction::triggered, this, &MainWindow::navigateForward);
     connect(m_actUp,      &QAction::triggered, this, &MainWindow::navigateUp);
-    connect(m_actHome,    &QAction::triggered, this, [this]() {
-        m_autoScanRetries = 0;
-        navigateHome();
-    });
+    connect(m_actHome,    &QAction::triggered, this, [this]() { navigateHome(); });
     connect(m_actAddFav,  &QAction::triggered, this, &MainWindow::addCurrentToFavorites);
     connect(m_btnView,    &QToolButton::clicked, this, &MainWindow::onViewToggled);
     connect(sortGroup, &QActionGroup::triggered, this, &MainWindow::onSortChanged);
 
     connect(m_addressBar, &AddressBar::navigateTo, this, [this](const QList<DlnaLocation> &path) {
-        if (path.isEmpty()) { m_autoScanRetries = 0; navigateHome(); return; }
+        if (path.isEmpty()) { navigateHome(); return; }
         m_forwardStack.clear();
         m_history = path;
         m_atHome = false;
@@ -266,8 +261,9 @@ SortMode MainWindow::effectiveSortMode() const
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 
-void MainWindow::navigateHome()
+void MainWindow::navigateHome(bool isAutoStart)
 {
+    m_autoScanRetries = isAutoStart ? AutoScanMaxRetries : 0;
     m_history.clear();
     m_forwardStack.clear();
     m_atHome = true;
@@ -332,7 +328,6 @@ void MainWindow::navigateBack()
             m_forwardStack.prepend(m_history.takeLast());
         }
         m_atHome = true;
-        m_autoScanRetries = 0;
         navigateHome();
         return;
     }
@@ -356,7 +351,6 @@ void MainWindow::navigateUp()
     const DlnaLocation &leaving = m_history.last();
     m_pendingFocusId = focusIdFor(leaving);
     if (m_history.size() <= 1) {
-        m_autoScanRetries = 0;
         navigateHome();
         return;
     }

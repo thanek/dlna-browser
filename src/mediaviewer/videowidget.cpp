@@ -13,18 +13,8 @@
 // ─── ControlOverlay ────────────────────────────────────────────────────────
 
 ControlOverlay::ControlOverlay(QWidget *parent)
-    : QWidget(parent)
-    , m_hideTimer(new QTimer(this))
+    : AutoHideOverlay(parent, true)
 {
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_NoSystemBackground);
-    setMouseTracking(true);
-    m_hideTimer->setSingleShot(true);
-    m_hideTimer->setInterval(3000);
-    connect(m_hideTimer, &QTimer::timeout, this, [this]() {
-        m_controlsVisible = false;
-        update();
-    });
 }
 
 void ControlOverlay::setTitle(const QString &title)
@@ -61,9 +51,7 @@ void ControlOverlay::setAudioMode(bool audio, const QPixmap &art)
 
 void ControlOverlay::showControls()
 {
-    m_controlsVisible = true;
-    m_hideTimer->start();
-    update();
+    showOverlay();
 }
 
 // ─── Geometry helpers ───────────────────────────────────────────────────────
@@ -79,7 +67,7 @@ QRectF ControlOverlay::titleBarRect() const
 
 QRectF ControlOverlay::controlBarRect() const
 {
-    int bw = qMin(600, width() - 80);
+    int bw = qMin(ControlBarMaxWidth, width() - 80);
     int bh = 72;
     return QRectF((width() - bw) / 2.0, height() - bh - 20, bw, bh);
 }
@@ -202,7 +190,7 @@ void ControlOverlay::paintEvent(QPaintEvent *)
     if (m_audioMode)
         paintAudioCircle(p);
 
-    if (!m_controlsVisible) return;
+    if (!m_overlayVisible) return;
 
     paintTitleBar(p);
     paintControlBar(p);
@@ -253,7 +241,7 @@ VideoWidget::VideoWidget(QWidget *parent)
     , m_playWatchdog(new QTimer(this))
 {
     m_playWatchdog->setSingleShot(true);
-    m_playWatchdog->setInterval(2000);
+    m_playWatchdog->setInterval(WatchdogMs);
     connect(m_playWatchdog, &QTimer::timeout, this, &VideoWidget::onPlayWatchdog);
     setMouseTracking(true);
 
@@ -270,12 +258,7 @@ VideoWidget::VideoWidget(QWidget *parent)
         update();
     });
 
-    connect(m_overlay, &ControlOverlay::playPauseClicked, this, [this]() {
-        if (m_player->playbackState() == QMediaPlayer::PlayingState)
-            m_player->pause();
-        else
-            m_player->play();
-    });
+    connect(m_overlay, &ControlOverlay::playPauseClicked, this, &VideoWidget::togglePlayPause);
     connect(m_overlay, &ControlOverlay::muteClicked, this, [this]() {
         m_audioOutput->setMuted(!m_audioOutput->isMuted());
         m_overlay->setMuted(m_audioOutput->isMuted());
@@ -304,10 +287,7 @@ void VideoWidget::loadItem(const DlnaItem &item)
     m_audioMode = (item.type == DlnaItemType::Audio);
     m_currentFrame = {};
     m_overlay->setAudioMode(m_audioMode);
-    QString displayTitle = item.title;
-    if (m_audioMode && !item.artist.isEmpty())
-        displayTitle = item.artist + " — " + item.title;
-    m_overlay->setTitle(displayTitle);
+    m_overlay->setTitle(item.displayTitle());
     m_overlay->setPosition(0, 0);
     m_overlay->setPlaying(false);
     m_overlay->setMuted(m_audioOutput->isMuted());
@@ -321,6 +301,14 @@ void VideoWidget::loadItem(const DlnaItem &item)
     m_pendingPlay = true;
     m_player->setSource(item.resourceUrl);
     setFocus();
+}
+
+void VideoWidget::togglePlayPause()
+{
+    if (m_player->playbackState() == QMediaPlayer::PlayingState)
+        m_player->pause();
+    else
+        m_player->play();
 }
 
 void VideoWidget::stop()
@@ -395,10 +383,7 @@ void VideoWidget::keyPressEvent(QKeyEvent *e)
         break;
     case Qt::Key_Space:
     case Qt::Key_Return:
-        if (m_player->playbackState() == QMediaPlayer::PlayingState)
-            m_player->pause();
-        else
-            m_player->play();
+        togglePlayPause();
         m_overlay->showControls();
         break;
     case Qt::Key_Left:

@@ -37,7 +37,7 @@ xattr -dr com.apple.quarantine /Applications/DlnaBrowser.app
 - Video, audio, image, and file-info views
 - Playback overlay with play/pause, mute, seek bar, and elapsed/total time
 - Audio mode with album art circle
-- Previous/Next navigation: status bar buttons, `PageUp`/`PageDown`, `⌘←` / `⌘→`
+- Previous/Next navigation: overlay buttons, two-finger swipe (macOS), `PageUp`/`PageDown`, `⌘←` / `⌘→`
 - `Esc` closes the viewer; `Space`/`Enter` toggles pause; `←`/`→` seeks ±5 s
 - Main window selection tracks the currently open file in the viewer
 
@@ -52,9 +52,9 @@ xattr -dr com.apple.quarantine /Applications/DlnaBrowser.app
 
 | Dependency | Version | Notes |
 |------------|---------|-------|
-| **Qt 6** | ≥ 6.7 | Core, Gui, Widgets, Network, Xml, Multimedia, MultimediaWidgets, Svg |
-| **CMake** | ≥ 3.20 | Build system |
-| **C++ compiler** | C++20 | Clang (macOS), GCC, or MSVC |
+| **Qt 6** | ≥ 6.8   | Core, Gui, Widgets, Network, Xml, Multimedia, MultimediaWidgets |
+| **CMake** | ≥ 3.20  | Build system |
+| **C++ compiler** | C++20   | Clang (macOS), GCC, or MSVC |
 
 Qt 6 is the only external dependency. The **Font Awesome 5 Free Solid** typeface is embedded in the binary via Qt Resource System (`resources/resources.qrc`) — no system fonts required.
 
@@ -125,29 +125,11 @@ ctest --test-dir build --output-on-failure
 ```
 src/
 ├── main.cpp                   # Entry point, QApplication setup, app icon
-├── dlna/
-│   ├── dlnadiscovery.*        # SSDP server discovery
-│   ├── dlnaclient.*           # ContentDirectory SOAP requests
-│   ├── dlnaparser.*           # Pure XML parsing (DIDL-Lite, descriptors) — unit-tested
-│   ├── dlnautils.*            # Shared helpers: formatTime, findPrev/NextFile
-│   └── dlnaitem.h             # Data types: DlnaItem, DlnaLocation, DlnaItemType
-├── browser/
-│   ├── mainwindow.*           # Main window, navigation, history
-│   ├── dlnamodel.*            # QAbstractListModel for folder contents
-│   ├── dlnaicons.h            # Centralised type→icon mapping
-│   ├── contentview.*          # List/icon view widget with mode switching
-│   ├── addressbar.*           # Clickable breadcrumb bar
-│   └── favoritespanel.*       # Favorites panel
-├── ui/
-│   └── faicon.*               # Font Awesome icons rendered from TTF
-└── mediaviewer/
-    ├── mediaviewer.*          # Playback window (QMainWindow)
-    ├── videowidget.*          # Video/audio player (QVideoSink-based)
-    ├── imagewidget.*          # Image viewer with zoom and pan
-    └── infowidget.*           # File info card
-tests/
-├── test_dlnaparser.*          # Qt Test unit tests (~30 cases)
-└── test_dlnamodel.*           # Qt Test unit tests (13 cases)
+├── dlna/                      # DLNA related code
+├── browser/                   # Browser logic
+├── ui/                        # UI utilities
+└── mediaviewer/               # Resource viewing components
+tests/                         # Unit tests
 ```
 
 ### Notable design decisions
