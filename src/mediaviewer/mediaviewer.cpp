@@ -79,7 +79,13 @@ void MediaViewer::openRow(int row)
 
     DlnaItem item = m_model->itemAt(row);
     setWindowTitle(item.title.isEmpty() ? tr("Media Viewer") : item.title);
+
+    QString displayTitle = item.title;
+    if (item.type == DlnaItemType::Audio && !item.artist.isEmpty())
+        displayTitle = item.artist + " — " + item.title;
+
     QStringList parts;
+    if (!item.resourceUrl.isEmpty()) parts << item.resourceUrl.toString();
     if (!item.mimeType.isEmpty()) parts << item.mimeType;
     if (item.fileSize > 0) {
         double mb = item.fileSize / 1048576.0;
