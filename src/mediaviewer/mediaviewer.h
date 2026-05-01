@@ -1,20 +1,48 @@
 #pragma once
 #include <QMainWindow>
+#include <QTimer>
 #include "dlna/dlnaitem.h"
 
 class QStackedWidget;
-class QToolButton;
 class QLabel;
+class QMouseEvent;
 class VideoWidget;
 class ImageWidget;
 class DlnaModel;
+
+class NavButtonsOverlay : public QWidget {
+    Q_OBJECT
+public:
+    explicit NavButtonsOverlay(QWidget *parent = nullptr);
+    void setPrevEnabled(bool enabled);
+    void setNextEnabled(bool enabled);
+    void showButtons();
+
+signals:
+    void prevClicked();
+    void nextClicked();
+
+protected:
+    void paintEvent(QPaintEvent *) override;
+    void mouseMoveEvent(QMouseEvent *) override;
+    void mousePressEvent(QMouseEvent *) override;
+    void mouseReleaseEvent(QMouseEvent *) override;
+
+private:
+    void forwardToUnderlying(QMouseEvent *e);
+    QRectF prevButtonRect() const;
+    QRectF nextButtonRect() const;
+
+    QTimer *m_hideTimer;
+    bool m_visible    = false;
+    bool m_prevEnabled = false;
+    bool m_nextEnabled = false;
+};
 
 class MediaViewer : public QMainWindow {
     Q_OBJECT
 public:
     explicit MediaViewer(QWidget *parent = nullptr);
-
-    // Open the item at `row` in `model`. Shows the window if hidden.
     void openItem(DlnaModel *model, int row);
 
 signals:
@@ -22,6 +50,7 @@ signals:
 
 protected:
     void closeEvent(QCloseEvent *) override;
+    void resizeEvent(QResizeEvent *) override;
 
 private:
     void navigatePrev();
@@ -29,14 +58,12 @@ private:
     void updateNavButtons();
     void openRow(int row);
 
-    QStackedWidget *m_stack;
-    VideoWidget    *m_video;
-    ImageWidget    *m_image;
+    QStackedWidget    *m_stack;
+    VideoWidget       *m_video;
+    ImageWidget       *m_image;
+    NavButtonsOverlay *m_navOverlay;
+    QLabel            *m_infoLabel;
 
-    QToolButton *m_btnPrev;
-    QToolButton *m_btnNext;
-    QLabel      *m_infoLabel;
-
-    DlnaModel *m_model  = nullptr;
-    int        m_row    = -1;
+    DlnaModel *m_model = nullptr;
+    int        m_row   = -1;
 };
