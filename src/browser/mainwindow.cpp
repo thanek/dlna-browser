@@ -10,6 +10,7 @@
 
 #include <QSettings>
 #include <QStackedWidget>
+#include <QEvent>
 
 #include <QToolBar>
 #include <QToolButton>
@@ -63,6 +64,9 @@ MainWindow::MainWindow(QWidget *parent)
             m_contentView, &ContentView::setCurrentRow);
     connect(m_inlineViewer, &MediaViewerWidget::closeRequested,
             this, &MainWindow::closeInlineViewer);
+    connect(m_inlineViewer, &MediaViewerWidget::fullscreenToggleRequested, this, [this] {
+        isFullScreen() ? showNormal() : showFullScreen();
+    });
     connect(m_inlineViewer, &MediaViewerWidget::titleChanged,
             this, &QWidget::setWindowTitle);
     connect(m_inlineViewer, &MediaViewerWidget::infoChanged,
@@ -102,8 +106,20 @@ void MainWindow::setupMenuBar()
     connect(actAbout, &QAction::triggered, this, &MainWindow::showAbout);
 }
 
+void MainWindow::changeEvent(QEvent *e)
+{
+    QMainWindow::changeEvent(e);
+    if (e->type() == QEvent::WindowStateChange) {
+        const bool fs = isFullScreen();
+        m_inlineViewer->setFullscreen(fs);
+        if (m_centralStack->currentWidget() == m_inlineViewer)
+            statusBar()->setVisible(!fs);
+    }
+}
+
 void MainWindow::closeInlineViewer()
 {
+    if (isFullScreen()) showNormal();
     m_inlineViewer->stop();
     m_centralStack->setCurrentWidget(m_browserView);
     m_toolBar->show();

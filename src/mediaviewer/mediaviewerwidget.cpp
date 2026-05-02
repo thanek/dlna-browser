@@ -36,15 +36,19 @@ void NavButtonsOverlay::setNextEnabled(bool enabled)
     update();
 }
 
-QRectF NavButtonsOverlay::buttonRect(int index) const
+void NavButtonsOverlay::setFullscreen(bool fullscreen)
 {
-    return QRectF(width() - NavButtonSize - 16, 16 + index * (NavButtonSize + 8),
-                  NavButtonSize, NavButtonSize);
+    if (m_fullscreen == fullscreen) return;
+    m_fullscreen = fullscreen;
+    update();
 }
 
-QRectF NavButtonsOverlay::closeButtonRect() const { return buttonRect(0); }
-QRectF NavButtonsOverlay::prevButtonRect()  const { return buttonRect(1); }
-QRectF NavButtonsOverlay::nextButtonRect()  const { return buttonRect(2); }
+qreal  NavButtonsOverlay::buttonColumnX()        const { return width() - NavButtonSize - 16; }
+QRectF NavButtonsOverlay::buttonRect(int index)  const { return QRectF(buttonColumnX(), 16 + index * (NavButtonSize + 8), NavButtonSize, NavButtonSize); }
+QRectF NavButtonsOverlay::closeButtonRect()      const { return buttonRect(0); }
+QRectF NavButtonsOverlay::prevButtonRect()       const { return buttonRect(1); }
+QRectF NavButtonsOverlay::nextButtonRect()       const { return buttonRect(2); }
+QRectF NavButtonsOverlay::fullscreenButtonRect() const { return QRectF(buttonColumnX(), height() - NavButtonSize - 16, NavButtonSize, NavButtonSize); }
 
 void NavButtonsOverlay::paintEvent(QPaintEvent *)
 {
@@ -63,9 +67,10 @@ void NavButtonsOverlay::paintEvent(QPaintEvent *)
                      int(r.center().y() - px.height() / 2.0), px);
     };
 
-    drawButton(closeButtonRect(), Fa::Xmark,     true);
-    drawButton(prevButtonRect(),  Fa::ArrowUp,   m_prevEnabled);
-    drawButton(nextButtonRect(),  Fa::ArrowDown, m_nextEnabled);
+    drawButton(closeButtonRect(),      Fa::Xmark,                      true);
+    drawButton(prevButtonRect(),       Fa::ArrowUp,    m_prevEnabled);
+    drawButton(nextButtonRect(),       Fa::ArrowDown,  m_nextEnabled);
+    drawButton(fullscreenButtonRect(), m_fullscreen ? Fa::Compress : Fa::Expand, true);
 }
 
 void NavButtonsOverlay::forwardToUnderlying(QEvent *e, QPointF globalPos)
@@ -156,6 +161,10 @@ void NavButtonsOverlay::mousePressEvent(QMouseEvent *e)
             emit nextClicked();
             return;
         }
+        if (fullscreenButtonRect().contains(e->position())) {
+            emit fullscreenClicked();
+            return;
+        }
     }
     forwardToUnderlying(e, e->globalPosition());
 }
@@ -184,8 +193,8 @@ MediaViewerWidget::MediaViewerWidget(QWidget *parent)
     m_navOverlay->setGeometry(m_stack->rect());
     m_navOverlay->raise();
 
-    connect(m_video, &VideoWidget::closeRequested, this, &MediaViewerWidget::closeRequested);
-    connect(m_image, &ImageWidget::closeRequested, this, &MediaViewerWidget::closeRequested);
+    connect(m_video, &VideoWidget::closeRequested, this, &MediaViewerWidget::onCloseRequested);
+    connect(m_image, &ImageWidget::closeRequested, this, &MediaViewerWidget::onCloseRequested);
 
     for (MediaWidget *w : {static_cast<MediaWidget*>(m_video),
                            static_cast<MediaWidget*>(m_image)}) {
@@ -193,9 +202,10 @@ MediaViewerWidget::MediaViewerWidget(QWidget *parent)
         connect(w, &MediaWidget::navigateNext, this, &MediaViewerWidget::navigateNext);
     }
 
-    connect(m_navOverlay, &NavButtonsOverlay::closeClicked, this, &MediaViewerWidget::closeRequested);
-    connect(m_navOverlay, &NavButtonsOverlay::prevClicked,  this, &MediaViewerWidget::navigatePrev);
-    connect(m_navOverlay, &NavButtonsOverlay::nextClicked,  this, &MediaViewerWidget::navigateNext);
+    connect(m_navOverlay, &NavButtonsOverlay::closeClicked,      this, &MediaViewerWidget::onCloseRequested);
+    connect(m_navOverlay, &NavButtonsOverlay::prevClicked,        this, &MediaViewerWidget::navigatePrev);
+    connect(m_navOverlay, &NavButtonsOverlay::nextClicked,        this, &MediaViewerWidget::navigateNext);
+    connect(m_navOverlay, &NavButtonsOverlay::fullscreenClicked,  this, &MediaViewerWidget::fullscreenToggleRequested);
 
     for (auto *sc : {
         new QShortcut(QKeySequence(Qt::Key_Up),   this, [this]{ navigatePrev(); }),
@@ -206,6 +216,21 @@ MediaViewerWidget::MediaViewerWidget(QWidget *parent)
 void MediaViewerWidget::stop()
 {
     m_video->stop();
+}
+
+void MediaViewerWidget::setFullscreen(bool fullscreen)
+{
+    if (m_fullscreen == fullscreen) return;
+    m_fullscreen = fullscreen;
+    m_navOverlay->setFullscreen(fullscreen);
+}
+
+void MediaViewerWidget::onCloseRequested()
+{
+    if (m_fullscreen)
+        emit fullscreenToggleRequested();
+    else
+        emit closeRequested();
 }
 
 void MediaViewerWidget::openItem(DlnaModel *model, int row)

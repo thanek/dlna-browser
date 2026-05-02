@@ -14,10 +14,13 @@ public:
     explicit NavButtonsOverlay(QWidget *parent = nullptr);
     void setPrevEnabled(bool enabled);
     void setNextEnabled(bool enabled);
+    void setFullscreen(bool fullscreen);
+
 signals:
     void closeClicked();
     void prevClicked();
     void nextClicked();
+    void fullscreenClicked();
 
 protected:
     bool event(QEvent *e) override;
@@ -29,13 +32,16 @@ protected:
 
 private:
     void forwardToUnderlying(QEvent *e, QPointF globalPos);
+    qreal  buttonColumnX() const;
     QRectF buttonRect(int index) const;
     QRectF closeButtonRect() const;
     QRectF prevButtonRect() const;
     QRectF nextButtonRect() const;
+    QRectF fullscreenButtonRect() const;
 
     bool   m_prevEnabled    = false;
     bool   m_nextEnabled    = false;
+    bool   m_fullscreen     = false;
     qreal  m_swipeAccumX    = 0;
     qreal  m_swipeAccumY    = 0;
     bool   m_swipeNavigated = false;
@@ -49,9 +55,11 @@ public:
     explicit MediaViewerWidget(QWidget *parent = nullptr);
     void openItem(DlnaModel *model, int row);
     void stop();
+    void setFullscreen(bool fullscreen);
 
 signals:
     void closeRequested();
+    void fullscreenToggleRequested();
     void rowChanged(int row);
     void titleChanged(const QString &title);
     void infoChanged(const QString &info);
@@ -64,6 +72,9 @@ private:
     void navigatePrev();
     void navigateNext();
     void updateNavButtons();
+    void onCloseRequested();
+
+    bool m_fullscreen = false;
 
     QStackedWidget    *m_stack;
     VideoWidget       *m_video;

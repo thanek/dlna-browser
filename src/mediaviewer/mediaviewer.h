@@ -15,6 +15,7 @@ signals:
 
 protected:
     void closeEvent(QCloseEvent *) override;
+    void changeEvent(QEvent *) override;
 
 private:
     MediaViewerWidget *m_widget;

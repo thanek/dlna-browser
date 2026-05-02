@@ -48,6 +48,9 @@ private slots:
     void showPreferences();
     void closeInlineViewer();
 
+protected:
+    void changeEvent(QEvent *) override;
+
 private:
     void setupUi();
     void setupMenuBar();

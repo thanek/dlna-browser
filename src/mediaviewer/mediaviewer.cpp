@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QStatusBar>
 #include <QCloseEvent>
+#include <QEvent>
 
 MediaViewer::MediaViewer(QWidget *parent)
     : QMainWindow(parent)
@@ -16,7 +17,10 @@ MediaViewer::MediaViewer(QWidget *parent)
     auto *infoLabel = new QLabel(this);
     statusBar()->addWidget(infoLabel, 1);
 
-    connect(m_widget, &MediaViewerWidget::closeRequested, this, &QWidget::close);
+    connect(m_widget, &MediaViewerWidget::closeRequested,          this, &QWidget::close);
+    connect(m_widget, &MediaViewerWidget::fullscreenToggleRequested, this, [this] {
+        isFullScreen() ? showNormal() : showFullScreen();
+    });
     connect(m_widget, &MediaViewerWidget::rowChanged,     this, &MediaViewer::rowChanged);
     connect(m_widget, &MediaViewerWidget::titleChanged,   this, &QWidget::setWindowTitle);
     connect(m_widget, &MediaViewerWidget::infoChanged,    infoLabel, &QLabel::setText);
@@ -34,4 +38,14 @@ void MediaViewer::closeEvent(QCloseEvent *e)
 {
     m_widget->stop();
     QMainWindow::closeEvent(e);
+}
+
+void MediaViewer::changeEvent(QEvent *e)
+{
+    QMainWindow::changeEvent(e);
+    if (e->type() == QEvent::WindowStateChange) {
+        const bool fs = isFullScreen();
+        m_widget->setFullscreen(fs);
+        statusBar()->setVisible(!fs);
+    }
 }
