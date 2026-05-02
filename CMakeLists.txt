@@ -40,6 +40,8 @@ set(SOURCES
     src/browser/mainwindow.cpp
     src/browser/aboutdialog.h
     src/browser/aboutdialog.cpp
+    src/browser/settingsdialog.h
+    src/browser/settingsdialog.cpp
     # mediaviewer — media playback
     src/mediaviewer/autohideoverlay.h
     src/mediaviewer/autohideoverlay.cpp

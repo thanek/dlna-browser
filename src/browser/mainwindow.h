@@ -42,6 +42,7 @@ private slots:
     void onViewToggled();
     void addCurrentToFavorites();
     void showAbout();
+    void showPreferences();
 
 private:
     void setupUi();

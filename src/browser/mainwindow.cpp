@@ -1,5 +1,6 @@
 #include "browser/mainwindow.h"
 #include "browser/aboutdialog.h"
+#include "browser/settingsdialog.h"
 #include "browser/addressbar.h"
 #include "browser/contentview.h"
 #include "browser/favoritespanel.h"
@@ -79,6 +80,12 @@ MainWindow::~MainWindow() = default;
 
 void MainWindow::setupMenuBar()
 {
+    auto *settingsMenu = menuBar()->addMenu(tr("Settings"));
+    QAction *actPrefs = settingsMenu->addAction(tr("Preferences…"));
+    actPrefs->setMenuRole(QAction::PreferencesRole);
+    actPrefs->setShortcut(QKeySequence::Preferences);
+    connect(actPrefs, &QAction::triggered, this, &MainWindow::showPreferences);
+
     auto *helpMenu = menuBar()->addMenu(tr("Help"));
     QAction *actAbout = helpMenu->addAction(tr("About DLNA Browser…"));
     actAbout->setMenuRole(QAction::AboutRole);
@@ -88,6 +95,12 @@ void MainWindow::setupMenuBar()
 void MainWindow::showAbout()
 {
     AboutDialog dlg(this);
+    dlg.exec();
+}
+
+void MainWindow::showPreferences()
+{
+    SettingsDialog dlg(this);
     dlg.exec();
 }
 
