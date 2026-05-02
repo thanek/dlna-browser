@@ -1,6 +1,7 @@
 #include "browser/mainwindow.h"
 #include "browser/aboutdialog.h"
 #include "browser/settingsdialog.h"
+#include "mediaviewer/mediaviewerwidget.h"
 #include "browser/addressbar.h"
 #include "browser/contentview.h"
 #include "browser/favoritespanel.h"
@@ -8,6 +9,7 @@
 #include "ui/faicon.h"
 
 #include <QSettings>
+#include <QStackedWidget>
 
 #include <QToolBar>
 #include <QToolButton>
@@ -57,6 +59,14 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::onFavoriteActivated);
     connect(m_mediaViewer, &MediaViewer::rowChanged,
             m_contentView, &ContentView::setCurrentRow);
+    connect(m_inlineViewer, &MediaViewerWidget::rowChanged,
+            m_contentView, &ContentView::setCurrentRow);
+    connect(m_inlineViewer, &MediaViewerWidget::closeRequested,
+            this, &MainWindow::closeInlineViewer);
+    connect(m_inlineViewer, &MediaViewerWidget::titleChanged,
+            this, &QWidget::setWindowTitle);
+    connect(m_inlineViewer, &MediaViewerWidget::infoChanged,
+            m_statusLabel, &QLabel::setText);
 
     // Restore persisted settings
     QSettings settings;
@@ -92,6 +102,15 @@ void MainWindow::setupMenuBar()
     connect(actAbout, &QAction::triggered, this, &MainWindow::showAbout);
 }
 
+void MainWindow::closeInlineViewer()
+{
+    m_inlineViewer->stop();
+    m_centralStack->setCurrentWidget(m_browserView);
+    m_toolBar->show();
+    setWindowTitle(tr("DLNA Browser"));
+    updateBrowseStatus();
+}
+
 void MainWindow::showAbout()
 {
     AboutDialog dlg(this);
@@ -108,21 +127,26 @@ void MainWindow::showPreferences()
 
 void MainWindow::setupUi()
 {
-    auto *splitter = new QSplitter(Qt::Horizontal, this);
-    setCentralWidget(splitter);
+    m_centralStack = new QStackedWidget(this);
+    setCentralWidget(m_centralStack);
 
-    m_favoritesPanel = new FavoritesPanel(this);
+    m_browserView = new QSplitter(Qt::Horizontal, m_centralStack);
+    m_favoritesPanel = new FavoritesPanel(m_browserView);
     m_favoritesPanel->setMinimumWidth(160);
     m_favoritesPanel->setMaximumWidth(280);
 
-    m_contentView = new ContentView(this);
+    m_contentView = new ContentView(m_browserView);
     m_contentView->setModel(m_model);
 
-    splitter->addWidget(m_favoritesPanel);
-    splitter->addWidget(m_contentView);
-    splitter->setStretchFactor(0, 0);
-    splitter->setStretchFactor(1, 1);
-    splitter->setSizes({200, 900});
+    m_browserView->addWidget(m_favoritesPanel);
+    m_browserView->addWidget(m_contentView);
+    m_browserView->setStretchFactor(0, 0);
+    m_browserView->setStretchFactor(1, 1);
+    m_browserView->setSizes({200, 900});
+
+    m_inlineViewer = new MediaViewerWidget(m_centralStack);
+    m_centralStack->addWidget(m_browserView);
+    m_centralStack->addWidget(m_inlineViewer);
 
     m_mediaViewer = new MediaViewer(nullptr);
 }
@@ -450,11 +474,9 @@ void MainWindow::onControlUrlReady(const QString &serverName, const QString &con
     m_client->browse(controlUrl, m_history.last().containerId, sortCriteriaString());
 }
 
-void MainWindow::onBrowseReady(const QList<DlnaItem> &items)
+void MainWindow::updateBrowseStatus()
 {
-    m_model->setItems(items);
-    restoreFocus();
-
+    const auto &items = m_model->items();
     int containers = 0, files = 0;
     for (const auto &i : items)
         i.isContainer() ? ++containers : ++files;
@@ -467,6 +489,14 @@ void MainWindow::onBrowseReady(const QList<DlnaItem> &items)
     else
         status = tr("%1 file(s)").arg(files);
     m_statusLabel->setText(status);
+}
+
+void MainWindow::onBrowseReady(const QList<DlnaItem> &items)
+{
+    m_model->setItems(items);
+    restoreFocus();
+
+    updateBrowseStatus();
 
     loadThumbnails(items);
 }
@@ -508,7 +538,13 @@ void MainWindow::onItemActivated(int row)
     }
 
     // Leaf item — open in media viewer
-    m_mediaViewer->openItem(m_model, row);
+    if (SettingsDialog::mediaViewerSeparateWindow()) {
+        m_mediaViewer->openItem(m_model, row);
+    } else {
+        m_inlineViewer->openItem(m_model, row);
+        m_centralStack->setCurrentWidget(m_inlineViewer);
+        m_toolBar->hide();
+    }
 }
 
 void MainWindow::onFavoriteActivated(const QList<DlnaLocation> &path)

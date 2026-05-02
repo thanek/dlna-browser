@@ -2,7 +2,6 @@
 
 #include <QCheckBox>
 #include <QDialogButtonBox>
-#include <QFormLayout>
 #include <QVBoxLayout>
 #include <QSettings>
 
@@ -10,7 +9,7 @@ static constexpr auto kSeparateWindow = "mediaViewerSeparateWindow";
 
 bool SettingsDialog::mediaViewerSeparateWindow()
 {
-    return QSettings().value(kSeparateWindow, true).toBool();
+    return QSettings().value(kSeparateWindow, false).toBool();
 }
 
 SettingsDialog::SettingsDialog(QWidget *parent)

@@ -14,10 +14,13 @@ class QToolBar;
 class QAction;
 class QLabel;
 class QToolButton;
+class QSplitter;
+class QStackedWidget;
 class AddressBar;
 class ContentView;
 class FavoritesPanel;
 class MediaViewer;
+class MediaViewerWidget;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -43,6 +46,7 @@ private slots:
     void addCurrentToFavorites();
     void showAbout();
     void showPreferences();
+    void closeInlineViewer();
 
 private:
     void setupUi();
@@ -52,6 +56,7 @@ private:
     void navigateTo(const DlnaLocation &location);
     void browseCurrentLocation();
     void updateNavigationButtons();
+    void updateBrowseStatus();
     void updateAddressBar();
     void loadThumbnails(const QList<DlnaItem> &items);
     void restoreFocus();
@@ -77,7 +82,10 @@ private:
     FavoritesPanel *m_favoritesPanel = nullptr;
     QLabel  *m_statusLabel = nullptr;
     QSlider *m_sizeSlider  = nullptr;
-    MediaViewer *m_mediaViewer = nullptr;
+    MediaViewer       *m_mediaViewer  = nullptr;
+    QStackedWidget    *m_centralStack = nullptr;
+    QSplitter         *m_browserView  = nullptr;
+    MediaViewerWidget *m_inlineViewer = nullptr;
 
     // DLNA
     DlnaDiscovery *m_discovery = nullptr;

@@ -8,6 +8,7 @@ namespace Fa {
     constexpr uint ArrowRight   = 0xf061;
     constexpr uint ArrowUp      = 0xf062;
     constexpr uint ArrowDown    = 0xf063;
+    constexpr uint Xmark        = 0xf00d;
     constexpr uint House        = 0xf015;
     constexpr uint List         = 0xf03a;
     constexpr uint Grip         = 0xf00a;  // th / grid view

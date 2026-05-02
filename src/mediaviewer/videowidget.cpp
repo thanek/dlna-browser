@@ -114,7 +114,7 @@ void ControlOverlay::paintTitleBar(QPainter &p)
     p.drawText(r, Qt::AlignCenter, m_title);
 }
 
-void ControlOverlay::paintAudioCircle(QPainter &p)
+void ControlOverlay::paintAlbumArt(QPainter &p)
 {
     int d = int(qMin(width(), height())*0.75);
     QRect rect = QRect((width() - d) / 2, (height() - d) / 2, d, d);
@@ -188,7 +188,7 @@ void ControlOverlay::paintEvent(QPaintEvent *)
     p.setRenderHint(QPainter::TextAntialiasing);
 
     if (m_audioMode)
-        paintAudioCircle(p);
+        paintAlbumArt(p);
 
     if (!m_overlayVisible) return;
 
