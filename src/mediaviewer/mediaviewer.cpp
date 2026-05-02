@@ -44,12 +44,12 @@ void NavButtonsOverlay::showButtons()
 
 QRectF NavButtonsOverlay::prevButtonRect() const
 {
-    return QRectF(16, (height() - NavButtonSize) / 2.0, NavButtonSize, NavButtonSize);
+    return QRectF(width() - NavButtonSize - 16, 16, NavButtonSize, NavButtonSize);
 }
 
 QRectF NavButtonsOverlay::nextButtonRect() const
 {
-    return QRectF(width() - NavButtonSize - 16, (height() - NavButtonSize) / 2.0, NavButtonSize, NavButtonSize);
+    return QRectF(width() - NavButtonSize - 16, 16 + NavButtonSize + 8, NavButtonSize, NavButtonSize);
 }
 
 void NavButtonsOverlay::paintEvent(QPaintEvent *)
@@ -69,8 +69,8 @@ void NavButtonsOverlay::paintEvent(QPaintEvent *)
                      int(r.center().y() - px.height() / 2.0), px);
     };
 
-    drawButton(prevButtonRect(), Fa::ArrowLeft,  m_prevEnabled);
-    drawButton(nextButtonRect(), Fa::ArrowRight, m_nextEnabled);
+    drawButton(prevButtonRect(), Fa::ArrowUp,   m_prevEnabled);
+    drawButton(nextButtonRect(), Fa::ArrowDown, m_nextEnabled);
 }
 
 void NavButtonsOverlay::forwardToUnderlying(QEvent *e, QPointF globalPos)
@@ -121,9 +121,9 @@ void NavButtonsOverlay::wheelEvent(QWheelEvent *e)
     case Qt::ScrollEnd: {
         const qreal absX = qAbs(m_swipeAccumX);
         const qreal absY = qAbs(m_swipeAccumY);
-        if (!m_swipeNavigated && absX >= 5 && absX >= absY) {
+        if (!m_swipeNavigated && absY >= 5 && absY >= absX) {
             m_swipeNavigated = true;
-            if (m_swipeAccumX > 0)
+            if (m_swipeAccumY > 0)
                 emit prevClicked();
             else
                 emit nextClicked();
@@ -204,8 +204,8 @@ MediaViewer::MediaViewer(QWidget *parent)
     connect(m_navOverlay, &NavButtonsOverlay::prevClicked, this, &MediaViewer::navigatePrev);
     connect(m_navOverlay, &NavButtonsOverlay::nextClicked, this, &MediaViewer::navigateNext);
 
-    new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Left),  this, [this]{ navigatePrev(); });
-    new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Right), this, [this]{ navigateNext(); });
+    new QShortcut(QKeySequence(Qt::Key_Up),   this, [this]{ navigatePrev(); });
+    new QShortcut(QKeySequence(Qt::Key_Down), this, [this]{ navigateNext(); });
 }
 
 void MediaViewer::openItem(DlnaModel *model, int row)
