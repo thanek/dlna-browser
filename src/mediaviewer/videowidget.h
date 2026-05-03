@@ -88,5 +88,5 @@ private:
     bool m_pendingPlay = false;
     int m_playRetries = 0;
 
-    static constexpr int WatchdogMs = 2000;
+    static constexpr int WatchdogMs = 3000;
 };

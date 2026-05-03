@@ -423,15 +423,29 @@ void VideoWidget::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 
 void VideoWidget::onPlayWatchdog()
 {
-    // macOS/AVFoundation sometimes enters PlayingState but stalls at position 0;
-    // reload the source to reset the audio pipeline (max 2 retries).
+    // macOS/AVFoundation sometimes enters PlayingState but stalls at position 0.
+    // Try progressively more invasive kicks before reloading the source.
     if (m_player->playbackState() != QMediaPlayer::PlayingState) return;
     if (m_player->position() != 0) return;
-    if (m_currentSource.isEmpty() || ++m_playRetries > 2) return;
+    if (m_currentSource.isEmpty() || ++m_playRetries > 3) return;
 
-    m_pendingPlay = true;
-    m_player->stop();
-    m_player->setSource(m_currentSource);
+    if (m_playRetries == 1) {
+        // Soft kick: pause + play (mirrors the user-facing pause/play workaround)
+        m_player->pause();
+        m_player->play();
+        m_playWatchdog->start();
+    } else if (m_playRetries == 2) {
+        // Seek kick: nudge past the start (mirrors the user-facing scrub + play workaround)
+        m_player->pause();
+        m_player->setPosition(1000);
+        m_player->play();
+        m_playWatchdog->start();
+    } else {
+        // Full reload: reset the AVFoundation pipeline entirely
+        m_pendingPlay = true;
+        m_player->stop();
+        m_player->setSource(m_currentSource);
+    }
 }
 
 void VideoWidget::fetchAlbumArt(const QUrl &url)
