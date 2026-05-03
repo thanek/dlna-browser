@@ -447,11 +447,16 @@ void VideoWidget::onSeekFix()
     // which un-stalls audio that started "playing" but produced no output.
     qint64 dur = m_player->duration();
     qint64 target = (dur > 2000) ? 1000 : (dur > 0 ? dur / 2 : 1000);
+    const bool wasMuted = m_audioOutput->isMuted();
+    if (!wasMuted)
+        m_audioOutput->setMuted(true);
     m_player->setPosition(target);
-    QTimer::singleShot(SeekFixReturnMs, this, [this] {
+    QTimer::singleShot(SeekFixReturnMs, this, [this, wasMuted] {
         if (m_currentSource.isEmpty()) return;  // stop() was called during the delay
         m_player->setPosition(0);
         m_player->play();
+        if (!wasMuted)
+            m_audioOutput->setMuted(false);
     });
 }
 
