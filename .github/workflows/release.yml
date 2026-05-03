@@ -9,7 +9,7 @@ on:
 jobs:
   build-macos:
     name: macOS — arm64
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.8.3'
+          version: '6.11.0'
           host: mac
           modules: 'qtmultimedia'
           cache: true
