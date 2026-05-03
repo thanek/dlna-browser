@@ -123,6 +123,7 @@ void MainWindow::closeInlineViewer()
     m_inlineViewer->stop();
     m_centralStack->setCurrentWidget(m_browserView);
     m_toolBar->show();
+    menuBar()->show();
     setWindowTitle(tr("DLNA Browser"));
     updateBrowseStatus();
 }
@@ -560,6 +561,7 @@ void MainWindow::onItemActivated(int row)
         m_inlineViewer->openItem(m_model, row);
         m_centralStack->setCurrentWidget(m_inlineViewer);
         m_toolBar->hide();
+        menuBar()->hide();
     }
 }
 
