@@ -414,6 +414,13 @@ void VideoWidget::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
         m_pendingPlay = false;
         m_player->play();
         m_playWatchdog->start();
+    } else if (!m_pendingPlay &&
+               status == QMediaPlayer::BufferedMedia &&
+               m_player->playbackState() == QMediaPlayer::PlayingState &&
+               m_player->position() == 0) {
+        // GStreamer/WMF: pipeline was "playing" during buffering but stalled at 0;
+        // re-kick now that the buffer is full (avoids waiting for the watchdog timeout).
+        m_player->play();
     } else if (status == QMediaPlayer::EndOfMedia) {
         m_player->pause();
         m_overlay->setPlaying(false);
