@@ -71,6 +71,7 @@ protected:
 private:
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
     void onPlayWatchdog();
+    void onSeekFix();
     void togglePlayPause();
     void fetchAlbumArt(const QUrl &url);
     void paintEvent(QPaintEvent *) override;
@@ -83,10 +84,14 @@ private:
     ControlOverlay *m_overlay;
     QNetworkAccessManager *m_nam;
     QTimer *m_playWatchdog;
+    QTimer *m_seekFixTimer;
     QUrl m_currentSource;
     bool m_audioMode = false;
     bool m_pendingPlay = false;
+    bool m_seekFixEnabled = false;
     int m_playRetries = 0;
 
-    static constexpr int WatchdogMs = 3000;
+    static constexpr int WatchdogMs      = 3000;
+    static constexpr int SeekFixMs       = 400;
+    static constexpr int SeekFixReturnMs = 100;
 };

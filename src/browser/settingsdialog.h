@@ -9,7 +9,11 @@ public:
     explicit SettingsDialog(QWidget *parent = nullptr);
 
     static bool mediaViewerSeparateWindow();
+    static bool autoplay();
+    static bool seekFix();
 
 private:
     QCheckBox *m_chkSeparateWindow;
+    QCheckBox *m_chkAutoplay;
+    QCheckBox *m_chkSeekFix;
 };

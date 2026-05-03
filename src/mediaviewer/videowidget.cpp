@@ -1,4 +1,5 @@
 #include "mediaviewer/videowidget.h"
+#include "browser/settingsdialog.h"
 #include "dlna/dlnautils.h"
 #include "ui/faicon.h"
 
@@ -239,10 +240,15 @@ VideoWidget::VideoWidget(QWidget *parent)
     , m_overlay(new ControlOverlay(this))
     , m_nam(new QNetworkAccessManager(this))
     , m_playWatchdog(new QTimer(this))
+    , m_seekFixTimer(new QTimer(this))
 {
     m_playWatchdog->setSingleShot(true);
     m_playWatchdog->setInterval(WatchdogMs);
     connect(m_playWatchdog, &QTimer::timeout, this, &VideoWidget::onPlayWatchdog);
+
+    m_seekFixTimer->setSingleShot(true);
+    m_seekFixTimer->setInterval(SeekFixMs);
+    connect(m_seekFixTimer, &QTimer::timeout, this, &VideoWidget::onSeekFix);
     setMouseTracking(true);
 
     // QVideoSink receives frames — we draw them ourselves in paintEvent,
@@ -298,7 +304,8 @@ void VideoWidget::loadItem(const DlnaItem &item)
 
     m_currentSource = item.resourceUrl;
     m_playRetries = 0;
-    m_pendingPlay = true;
+    m_pendingPlay    = SettingsDialog::autoplay();
+    m_seekFixEnabled = m_pendingPlay && SettingsDialog::seekFix();
     m_player->setSource(item.resourceUrl);
     setFocus();
 }
@@ -315,6 +322,7 @@ void VideoWidget::stop()
 {
     m_pendingPlay = false;
     m_playRetries = 0;
+    m_seekFixTimer->stop();
     m_playWatchdog->stop();
     m_currentSource.clear();
     m_player->stop();
@@ -413,6 +421,8 @@ void VideoWidget::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
         (status == QMediaPlayer::LoadedMedia || status == QMediaPlayer::BufferedMedia)) {
         m_pendingPlay = false;
         m_player->play();
+        if (m_seekFixEnabled)
+            m_seekFixTimer->start();
         m_playWatchdog->start();
     } else if (!m_pendingPlay &&
                status == QMediaPlayer::BufferedMedia &&
@@ -426,6 +436,23 @@ void VideoWidget::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
         m_overlay->setPlaying(false);
         m_overlay->showControls();
     }
+}
+
+void VideoWidget::onSeekFix()
+{
+    if (m_player->playbackState() != QMediaPlayer::PlayingState) return;
+    if (m_player->position() != 0) return;
+
+    // Seeking forces the GStreamer/WMF pipeline to flush and re-initialise,
+    // which un-stalls audio that started "playing" but produced no output.
+    qint64 dur = m_player->duration();
+    qint64 target = (dur > 2000) ? 1000 : (dur > 0 ? dur / 2 : 1000);
+    m_player->setPosition(target);
+    QTimer::singleShot(SeekFixReturnMs, this, [this] {
+        if (m_currentSource.isEmpty()) return;  // stop() was called during the delay
+        m_player->setPosition(0);
+        m_player->play();
+    });
 }
 
 void VideoWidget::onPlayWatchdog()
