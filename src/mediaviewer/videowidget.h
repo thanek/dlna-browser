@@ -33,7 +33,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *) override;
 
 private:
-    void paintAlbumArt(QPainter &p);
+    void paintAudioCover(QPainter &p);
     void paintTitleBar(QPainter &p);
     void paintControlBar(QPainter &p);
     void paintPlayIcon(QPainter &p, QRectF r, bool playing);

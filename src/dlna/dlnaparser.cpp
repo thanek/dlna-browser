@@ -72,9 +72,9 @@ QList<DlnaItem> parseDidl(const QString &didlXml)
             bool isThumbnail = extra.contains("JPEG_TN") || extra.contains("PNG_TN");
             if (isThumbnail) {
                 if (item.thumbnailUrl.isEmpty())
-                    item.thumbnailUrl = QUrl(res.text());
+                    item.thumbnailUrl = QUrl(res.text().trimmed());
             } else if (item.resourceUrl.isEmpty()) {
-                item.resourceUrl = QUrl(res.text());
+                item.resourceUrl = QUrl(res.text().trimmed());
                 item.mimeType    = mime;
                 item.type        = DlnaItem::typeFromMime(mime);
                 QString sizeStr  = res.attribute("size");
