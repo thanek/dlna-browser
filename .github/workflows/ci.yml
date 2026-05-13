@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-24.04, macos-latest, windows-2022]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
@@ -29,7 +29,7 @@ jobs:
             libxcb-cursor-dev
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
           host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
